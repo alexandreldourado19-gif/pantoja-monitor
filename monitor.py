@@ -22,7 +22,8 @@ def enviar_mensagem_telegram(mensagem):
         "parse_mode": "Markdown"
     }
     try:
-        requests.post(url, json=payload)
+        r = requests.post(url, json=payload, timeout=10)
+        r.raise_for_status()
     except Exception as e:
         print(f"Erro ao enviar mensagem no Telegram: {e}")
 
@@ -42,7 +43,7 @@ def salvar_historico(historico):
 
 def raspar_produtos():
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
     
     try:
@@ -55,21 +56,36 @@ def raspar_produtos():
     soup = BeautifulSoup(resposta.text, "html.parser")
     produtos_encontrados = []
 
-    # Busca padrão para estrutura e-commerce (links e títulos de produtos)
+    # Ignora links irrelevantes (carrinho, conta, redes sociais, políticas)
+    palavras_bloqueadas = [
+        "carrinho", "cart", "minha-conta", "account", "login", "cadastre-se", 
+        "fale-conosco", "contato", "quem-somos", "politica", "trocas", 
+        "instagram", "facebook", "whatsapp", "termos", "atendimento", "blog"
+    ]
+
     for a in soup.find_all("a", href=True):
-        href = a["href"]
+        href = a["href"].strip()
         texto = a.get_text(strip=True)
         
-        # Filtra links relevantes de produtos
-        if "/produto/" in href or "/p/" in href or "produto" in href:
-            link_completo = href if href.startswith("http") else f"{URL_ALVO.rstrip('/')}/{href.lstrip('/')}"
-            if texto and len(texto) > 3:
-                produtos_encontrados.append({
-                    "nome": texto,
-                    "link": link_completo
-                })
+        # Filtra elementos vazios ou links muito curtos
+        if not href or len(texto) < 4 or href.startswith("#") or href.startswith("javascript:"):
+            continue
 
-    # Remove duplicados da raspagem atual
+        # Verifica se não é um link institucional/sistema
+        if any(b in href.lower() for b in palavras_bloqueadas):
+            continue
+
+        # Monta a URL completa
+        link_completo = href if href.startswith("http") else f"{URL_ALVO.rstrip('/')}/{href.lstrip('/')}"
+        
+        # Garante que seja um link dentro do próprio domínio
+        if "pantoja11.com.br" in link_completo:
+            produtos_encontrados.append({
+                "nome": texto,
+                "link": link_completo
+            })
+
+    # Remove links duplicados
     produtos_unicos = {p['link']: p for p in produtos_encontrados}.values()
     return list(produtos_unicos)
 
@@ -86,9 +102,9 @@ def main():
             historico.append(prod)
 
     if novos_produtos:
-        print(f"Encontrados {len(novos_produtos)} novos produtos!")
+        print(f"Encontrados {len(novos_produtos)} novos links/produtos!")
         for p in novos_produtos:
-            msg = f"🚨 *Novo produto encontrado na Pantoja11!*\n\n📌 *{p['nome']}*\n🔗 [Acessar produto]({p['link']})"
+            msg = f"🚨 *Novo item encontrado na Pantoja11!*\n\n📌 *{p['nome']}*\n🔗 [Acessar link]({p['link']})"
             enviar_mensagem_telegram(msg)
         
         salvar_historico(historico)
@@ -97,4 +113,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-                                
+    
