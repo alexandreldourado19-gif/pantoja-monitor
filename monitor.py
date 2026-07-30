@@ -11,10 +11,17 @@ URL_ALVO = "https://www.pantoja11.com.br"
 ARQUIVO_HISTORICO = "data/produtos.json"
 
 # Categorias de interesse enviadas no print
+# Categorias de interesse (usando termos mais abrangentes para capturar todas as variações de URL)
 CATEGORIAS_ALVO = [
-    "jogador", "kit-infantil", "promocao", "retro", 
-    "torcedor-24-25", "torcedor-25-26", "torcedor-26-27", 
-    "basquete-nba", "beisebol-25-26", "bone", "bones"
+    "jogador", 
+    "kit-infantil", 
+    "promocao", 
+    "retro", 
+    "torcedor",       # Captura Torcedor 24/25, 25/26, 26/27 e qualquer variação
+    "basquete-nba", 
+    "beisebol", 
+    "bone", 
+    "bones"
 ]
 
 def enviar_mensagem_telegram(mensagem):
