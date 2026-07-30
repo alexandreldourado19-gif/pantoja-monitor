@@ -334,5 +334,9 @@
   {
     "nome": "Link de produto/categoria",
     "link": "https://www.wbuy.com.br/?utm_source=pantoja11.com.br&utm_medium=Pantoja+1.1&utm_campaign=signature"
+  },
+  {
+    "nome": "Todas Categorias",
+    "link": "https://www.pantoja11.com.br/javascript:;"
   }
 ]
