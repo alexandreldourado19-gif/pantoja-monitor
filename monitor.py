@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
@@ -47,7 +48,6 @@ def carregar_historico():
         try:
             with open(ARQUIVO_HISTORICO, "r", encoding="utf-8") as f:
                 dados = json.load(f)
-                # Garante compatibilidade caso o histórico antigo fosse uma lista
                 if isinstance(dados, dict):
                     return dados
                 elif isinstance(dados, list):
@@ -78,12 +78,10 @@ def extrair_tamanhos_da_pagina(page, url):
         content = page.content()
         soup = BeautifulSoup(content, "html.parser")
         
-        # Procura por botões, selects ou elementos com classe/atributos de tamanho
         elementos = soup.find_all(["button", "option", "li", "span", "div"])
         
         for el in elementos:
             texto = el.get_text(strip=True).upper()
-            # Ignora elementos desabilitados ou esgotados
             classes = " ".join(el.get("class", [])).lower()
             if "disabled" in classes or "indisponivel" in classes or "esgotado" in classes or el.get("disabled"):
                 continue
@@ -145,7 +143,6 @@ def raspar_loja():
 
         print(f"🔎 Encontrados {len(produtos_encontrados)} links potenciais. Verificando tamanhos...")
 
-        # Para cada produto, acessamos a página individual para verificar tamanhos
         produtos_detalhados = {}
         for link, nome in produtos_encontrados.items():
             tamanhos = extrair_tamanhos_da_pagina(page, link)
@@ -171,10 +168,10 @@ def main():
         if link not in historico:
             str_tamanhos = ", ".join(tamanhos_atuais) if tamanhos_atuais else "Não identificados/Único"
             msg = (
-                f"🚨 **Novo produto na Pantoja11!**\n\n"
-                f"📌 **Item:** {nome}\n"
-                f"📏 **Tamanhos:** {str_tamanhos}\n"
-                f"🔗 **Link:** {link}"
+                f"🚨 Novo produto na Pantoja11!\n\n"
+                f"📌 Item: {nome}\n"
+                f"📏 Tamanhos: {str_tamanhos}\n"
+                f"🔗 Link: {link}"
             )
             if enviar_mensagem_telegram(msg):
                 historico[link] = {
@@ -182,6 +179,7 @@ def main():
                     "tamanhos": tamanhos_atuais
                 }
                 houve_alteracao = True
+                time.sleep(1)  # Pausa de 1s para o Telegram não bloquear
 
         # 2. Produto já existia, mas entrou TAMANHO NOVO (Reposição)
         else:
@@ -192,16 +190,17 @@ def main():
                 str_novos = ", ".join(tamanhos_novos)
                 str_todos = ", ".join(tamanhos_atuais)
                 msg = (
-                    f"🔄 **Reposição de Tamanho na Pantoja11!**\n\n"
-                    f"📌 **Item:** {nome}\n"
-                    f"✨ **Novo(s) tamanho(s) disponível(is):** {str_novos}\n"
-                    f"📏 **Todos disponíveis:** {str_todos}\n"
-                    f"🔗 **Link:** {link}"
+                    f"🔄 Reposição de Tamanho na Pantoja11!\n\n"
+                    f"📌 Item: {nome}\n"
+                    f"✨ Novo(s) tamanho(s) disponível(is): {str_novos}\n"
+                    f"📏 Todos disponíveis: {str_todos}\n"
+                    f"🔗 Link: {link}"
                 )
                 if enviar_mensagem_telegram(msg):
                     historico[link]["tamanhos"] = tamanhos_atuais
                     historico[link]["nome"] = nome
                     houve_alteracao = True
+                    time.sleep(1)  # Pausa de 1s para o Telegram não bloquear
 
     if houve_alteracao:
         salvar_historico(historico)
@@ -211,4 +210,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+                        
