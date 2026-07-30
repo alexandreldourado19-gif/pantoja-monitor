@@ -10,11 +10,11 @@ CHAT_ID = os.environ.get("CHAT_ID")
 URL_ALVO = "https://www.pantoja11.com.br"
 ARQUIVO_HISTORICO = "data/produtos.json"
 
-# Links genéricos que não queremos monitorar
-LINKS_IGNORADOS = [
-    "/", "/.", "/./", "#", "javascript:", "/carrinho", "/checkout", 
-    "/minha-conta", "/contato", "/quem-somos", "/trocas-e-devolucoes",
-    "/politica-de-privacidade", "/termos-de-uso"
+# Categorias de interesse enviadas no print
+CATEGORIAS_ALVO = [
+    "jogador", "kit-infantil", "promocao", "retro", 
+    "torcedor-24-25", "torcedor-25-26", "torcedor-26-27", 
+    "basquete-nba", "beisebol-25-26", "bone", "bones"
 ]
 
 def enviar_mensagem_telegram(mensagem):
@@ -50,7 +50,7 @@ def salvar_historico(historico):
         json.dump(historico, f, ensure_ascii=False, indent=2)
 
 def raspar_produtos():
-    print("🌐 Carregando a loja com Playwright...")
+    print("🌐 Carregando a loja Pantoja11...")
     html_content = ""
     
     with sync_playwright() as p:
@@ -66,7 +66,7 @@ def raspar_produtos():
             page.wait_for_timeout(3000)
             html_content = page.content()
         except Exception as e:
-            print(f"❌ Erro ao carregar página: {e}")
+            print(f"❌ Erro ao carregar a página: {e}")
             browser.close()
             return []
         
@@ -81,26 +81,28 @@ def raspar_produtos():
         href = a["href"].strip()
         texto = a.get_text(strip=True)
         
-        # Filtra links vazios ou irrelevantes
-        if not href or any(href.endswith(ign) or href == ign for ign in LINKS_IGNORADOS):
+        # Descarta rotas inválidas ou de navegação do navegador
+        if not href or "javascript:" in href.lower() or href.startswith("#"):
             continue
 
-        # Formata a URL corretamente
+        # Formata URL
         if href.startswith("http"):
             link_completo = href
         else:
             path = href.lstrip("./").lstrip("/")
             link_completo = f"https://www.pantoja11.com.br/{path}"
 
-        nome = texto if len(texto) >= 3 else "Produto Pantoja11"
+        # Verifica se o link pertence a alguma das categorias desejadas
+        pertence_categoria = any(cat in link_completo.lower() for cat in CATEGORIAS_ALVO)
 
-        if "pantoja11.com.br" in link_completo:
+        if pertence_categoria and "pantoja11.com.br" in link_completo:
+            nome = texto if len(texto) >= 3 else "Item/Produto"
             produtos_encontrados.append({
                 "nome": nome,
                 "link": link_completo
             })
 
-    # Remove duplicados da própria varredura
+    # Remove links duplicados
     produtos_unicos = {p['link']: p for p in produtos_encontrados}.values()
     return list(produtos_unicos)
 
@@ -116,17 +118,15 @@ def main():
             novos_produtos.append(prod)
 
     if novos_produtos:
-        print(f"🚨 {len(novos_produtos)} novos itens identificados!")
+        print(f"🚨 Encontrados {len(novos_produtos)} novos itens nas categorias selecionadas!")
         
         for p in novos_produtos:
-            msg = f"🚨 Novo produto/item Pantoja11!\n\n📌 Item: {p['nome']}\n🔗 Link: {p['link']}"
+            msg = f"🚨 Novo item na Pantoja11!\n\n📌 Nome: {p['nome']}\n🔗 Link: {p['link']}"
             if enviar_mensagem_telegram(msg):
-                # Adiciona e salva no histórico para nunca mais repetir essa mensagem
                 historico.append(p)
                 salvar_historico(historico)
     else:
-        print("ℹ️ Tudo atualizado! Nenhum produto novo encontrado.")
+        print("ℹ️ Nenhum item novo encontrado nas categorias monitoradas.")
 
 if __name__ == "__main__":
     main()
-            
