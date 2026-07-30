@@ -1,1 +1,343 @@
-{}
+{
+  "https://www.pantoja11.com.br/basquete-nba/": {
+    "nome": "BASQUETE NBA",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/beisebol-25-26/": {
+    "nome": "Beisebol 25/26",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/bone/": {
+    "nome": "Boné",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/jogador/": {
+    "nome": "Jogador",
+    "tamanhos": [
+      "M",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/kit-infantil/": {
+    "nome": "Kit infantil",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/promocao/": {
+    "nome": "Promoção",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/retro/": {
+    "nome": "Retro",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/torcedor-24-25/": {
+    "nome": "Torcedor 24/25",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/torcedor/": {
+    "nome": "Torcedor 25/26",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/torcedor-26-27/": {
+    "nome": "Torcedor 26/27",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-do-corinthians-26-27-torcedor-feminina/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/bone-do-brasil-alguns-vai-com-patrocinio-nike-outros-com-jordan/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-flamengo-2025-jogador/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-brasil-26-27-torcedor-masculino-vazamento/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/kit-infantil-chelsea-25-26/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/kit-infantil-da-alemanha-26-27/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-manchester-city-away-25-26-torcedor/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/grade-fechada-12-camisas-brasil-amarelo-1998-retro/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-do-flamengo-26-27-torcedor-feminina/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-borussia-dortmund-26-27-torcedor-masculina/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-liverpool-25-26-torcedor-masculina/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/kit-infantil-da-espanha-26-27/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-do-palmeiras-ii-25-26-masculina-torcedor/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-bahia-iii-2025-26-torcedor-masculina/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/kit-infantil-da-italia-25-26/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-stoke-city-home-1-2025-26-macron-torcedor-masculina/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/kit-infantil-do-brasil-retro-2002/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/kit-infantil-do-palmeiras-25-26-69ab54a0b2b28/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-modelo-torcedor-masculino-manchester-city-away-2025-26/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-arsenal-2025-26-baseball-torcedor-masculina-branca/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-psg-jogador-25-26/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-vasco-da-gama-i-25-26-torcedor-masculina/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-palmeiras-25-26-jogador/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-corinthians-treino-2026-27-torcedor-masculina/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-juventus-away-25-26-torcedor-masculina-azul/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-palmeiras-25-26-jogador-696d33c75b825/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-retro-selecao-brasil-1998-98/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-cruzeiro-third-25-26-torcedor/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-flamengo-branca-26-27-masculina-jogador/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-brasil-jogador-26-27-copa-do-mundo/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-lyon-i-2025-26-torcedor-masculina-branca/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-chelsea-25-26-torcedor/": {
+    "nome": "Camisa do Chelsea 25/26 Torcedor",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/nova-camisa-do-manchester-city-25-26-jogador/": {
+    "nome": "Nova camisa do Manchester City 25/26 Jogador",
+    "tamanhos": []
+  }
+}
