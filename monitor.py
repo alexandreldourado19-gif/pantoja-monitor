@@ -2,6 +2,7 @@ import os
 import json
 import requests
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
@@ -41,24 +42,35 @@ def salvar_historico(historico):
         json.dump(historico, f, ensure_ascii=False, indent=2)
 
 def raspar_produtos():
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
-    }
+    print("🌐 Abrindo navegador Chromium para carregar o JavaScript do site...")
     
-    try:
-        resposta = requests.get(URL_ALVO, headers=headers, timeout=15)
-        print(f"🌐 Status de resposta do site: {resposta.status_code}")
-        resposta.raise_for_status()
-    except Exception as e:
-        print(f"❌ Erro ao acessar o site: {e}")
-        return []
+    html_content = ""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        # Simula uma tela e usuário real
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
+        page = context.new_page()
+        
+        try:
+            # Acessa a página e aguarda até que as requisições da rede parem
+            page.goto(URL_ALVO, wait_until="networkidle", timeout=60000)
+            # Rola a página para baixo para forçar o carregamento de imagens/produtos
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            page.wait_for_timeout(3000) # Aguarda 3 segundos extras
+            html_content = page.content()
+            print("✅ Página totalmente carregada pelo Playwright!")
+        except Exception as e:
+            print(f"❌ Erro ao carregar com Playwright: {e}")
+            browser.close()
+            return []
+        
+        browser.close()
 
-    soup = BeautifulSoup(resposta.text, "html.parser")
-    
-    # Pega todos os links <a> existentes na página
+    soup = BeautifulSoup(html_content, "html.parser")
     todos_links = soup.find_all("a", href=True)
-    print(f"🔎 Total de links brutos encontrados no site: {len(todos_links)}")
+    print(f"🔎 Total de links brutos encontrados após renderização JS: {len(todos_links)}")
 
     produtos_encontrados = []
 
@@ -70,8 +82,6 @@ def raspar_produtos():
             continue
 
         link_completo = href if href.startswith("http") else f"{URL_ALVO.rstrip('/')}/{href.lstrip('/')}"
-        
-        # Nome padrão caso o link não tenha texto
         nome = texto if len(texto) >= 3 else "Link de produto/categoria"
 
         if "pantoja11.com.br" in link_completo:
@@ -81,7 +91,7 @@ def raspar_produtos():
             })
 
     produtos_unicos = {p['link']: p for p in produtos_encontrados}.values()
-    print(f"📦 Total de links válidos após filtragem básica: {len(produtos_unicos)}")
+    print(f"📦 Total de links válidos para monitoramento: {len(produtos_unicos)}")
     return list(produtos_unicos)
 
 def main():
@@ -98,9 +108,9 @@ def main():
 
     if novos_produtos:
         print(f"🚨 Encontrados {len(novos_produtos)} novos itens!")
-        # Envia no máximo 3 no primeiro disparo de teste para não sobrecarregar
+        # Envia os 3 primeiros como teste para não estourar limite do Telegram
         for p in novos_produtos[:3]:
-            msg = f"🚨 Notificação do Monitor Pantoja11!\n\n📌 Item: {p['nome']}\n🔗 Link: {p['link']}"
+            msg = f"🚨 Notificação Pantoja11!\n\n📌 Item: {p['nome']}\n🔗 Link: {p['link']}"
             enviar_mensagem_telegram(msg)
         
         salvar_historico(historico)
@@ -109,4 +119,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-        
