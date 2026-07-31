@@ -28,7 +28,13 @@
   },
   "https://www.pantoja11.com.br/retro/": {
     "nome": "Retro",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/torcedor-24-25/": {
     "nome": "Torcedor 24/25",
@@ -36,7 +42,9 @@
   },
   "https://www.pantoja11.com.br/torcedor/": {
     "nome": "Torcedor 25/26",
-    "tamanhos": []
+    "tamanhos": [
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/torcedor-26-27/": {
     "nome": "Torcedor 26/27",
@@ -54,7 +62,11 @@
   },
   "https://www.pantoja11.com.br/bone-do-brasil-alguns-vai-com-patrocinio-nike-outros-com-jordan/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-flamengo-2025-jogador/": {
     "nome": "Produto Pantoja11",
@@ -538,8 +550,12 @@
     ]
   },
   "https://www.pantoja11.com.br/kit-infantil-palmeiras-2025-26-i-verde/": {
-    "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "nome": "Kit Infantil Palmeiras 2025/26 I - Verde",
+    "tamanhos": [
+      "P",
+      "M",
+      "G"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-juventus-i-2025-26-torcedor-pro-masculina/": {
     "nome": "Produto Pantoja11",
@@ -586,7 +602,11 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-milan-retro-2006-69e2558044229/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-do-brasil-1998-jogador/": {
     "nome": "Produto Pantoja11",
@@ -641,7 +661,11 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-milan-retro-2006/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-do-juventus-jogador-25-26-68fc3034817d8/": {
     "nome": "Produto Pantoja11",
@@ -669,11 +693,19 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-colombia-26-27/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G"
+    ]
   },
   "https://www.pantoja11.com.br/kit-infantil-do-portugal-26-27-6977cb14e4ab5/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G"
+    ]
   },
   "https://www.pantoja11.com.br/corinthians-versao-jogador-25-26/": {
     "nome": "Produto Pantoja11",
@@ -1230,12 +1262,17 @@
       "GG",
       "2XL",
       "4XL",
-      "3XL"
+      "3XL",
+      "G"
     ]
   },
   "https://www.pantoja11.com.br/kit-infantil-do-flamengo-26-27/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-do-fluminense-i-25-umbro-masculina-torcedor/": {
     "nome": "Produto Pantoja11",
@@ -1303,6 +1340,34 @@
     ]
   },
   "https://www.pantoja11.com.br/camisa-inter-de-milao-jogador-2025-26-com-patrocinio-betsson-sport/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-brasil-retro-i-2004-2005-ronaldo-9/?sku=5093491.310044.0.419547": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/kit-infantil-do-brasil-26-27/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-vasco-nike-i-2026-27-jogador-masculina-6a4d7e6feb1d9/": {
     "nome": "Produto Pantoja11",
     "tamanhos": [
       "P",
