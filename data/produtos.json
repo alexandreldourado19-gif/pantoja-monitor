@@ -111,7 +111,9 @@
   },
   "https://www.pantoja11.com.br/grade-fechada-12-camisas-brasil-amarelo-1998-retro/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-do-flamengo-26-27-torcedor-feminina/": {
     "nome": "Produto Pantoja11",
@@ -552,9 +554,7 @@
   "https://www.pantoja11.com.br/kit-infantil-palmeiras-2025-26-i-verde/": {
     "nome": "Kit Infantil Palmeiras 2025/26 I - Verde",
     "tamanhos": [
-      "P",
-      "M",
-      "G"
+      "2XL"
     ]
   },
   "https://www.pantoja11.com.br/camisa-juventus-i-2025-26-torcedor-pro-masculina/": {
@@ -1176,7 +1176,9 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-do-mexico-26-27/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-do-palmeiras-mundial-25-26-jogador/": {
     "nome": "Produto Pantoja11",
@@ -1374,6 +1376,40 @@
       "M",
       "G",
       "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/kit-infantil-do-flamengo-de-treino-26-27/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/grade-com-12-camisas-do-flamengo-branca-26-27-masculina-jogador/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-do-sao-paulo-versao-jogador-2025/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-sao-paulo-versao-jogador-2025/?sku=4598312.310045.0.419551": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/grade-com-12-camisas-flamengo-ii-25-26-torcedor-masculina-veja-as-fotos-camisa-com-pouca-transferencia-de-tinta/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
       "2XL"
     ]
   }
