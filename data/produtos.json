@@ -148,7 +148,13 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-da-espanha-26-27/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-do-palmeiras-ii-25-26-masculina-torcedor/": {
     "nome": "Produto Pantoja11",
@@ -612,7 +618,9 @@
     "tamanhos": [
       "P",
       "M",
-      "G"
+      "G",
+      "GG",
+      "2XL"
     ]
   },
   "https://www.pantoja11.com.br/camisa-do-brasil-1998-jogador/": {
@@ -696,7 +704,13 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-da-alemanha-26-27-69ab4b8e16b5a/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/kit-infantil-colombia-26-27/": {
     "nome": "Produto Pantoja11",
@@ -1148,7 +1162,8 @@
       "P",
       "M",
       "G",
-      "GG"
+      "GG",
+      "2XL"
     ]
   },
   "https://www.pantoja11.com.br/camisa-da-italia-26-27-torcedor/": {
@@ -1175,7 +1190,13 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-do-milan-25-26/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-do-corinthians-2025-26-laranja-jogador/": {
     "nome": "Produto Pantoja11",
@@ -1190,6 +1211,10 @@
   "https://www.pantoja11.com.br/kit-infantil-do-mexico-26-27/": {
     "nome": "Produto Pantoja11",
     "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
       "2XL"
     ]
   },
@@ -1504,6 +1529,28 @@
   },
   "https://www.pantoja11.com.br/grade-com-12-camisas-do-flamengo-26-27-masculina-torcedor/": {
     "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-selecao-italia-away-26-27-torcedor/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-brasil-retro-2002-kaka-8/?sku=5093586.310044.0.419547": {
+    "nome": "Abrir completo",
     "tamanhos": [
       "P",
       "M",
