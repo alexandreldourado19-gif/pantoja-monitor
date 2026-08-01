@@ -455,7 +455,8 @@
     "tamanhos": [
       "G",
       "GG",
-      "2XL"
+      "2XL",
+      "P"
     ]
   },
   "https://www.pantoja11.com.br/camisa-do-real-madrid-2026-27-torcedor-masculina/": {
@@ -924,7 +925,13 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-do-santos-25-26/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-do-flamengo-26-27-torcedor/": {
     "nome": "Produto Pantoja11",
@@ -1421,7 +1428,13 @@
   },
   "https://www.pantoja11.com.br/grade-com-12-camisas-kit-infantil-do-portugal-26-27/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/grade-com-12-camisas-do-flamengo-26-27-torcedor-masculino/": {
     "nome": "Produto Pantoja11",
@@ -1467,6 +1480,36 @@
       "2XL",
       "4XL",
       "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/regata-basquete-nba-lakers-77-doncic-edicao-mamba-negra/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/regata-basquete-nba-lakers-77-doncic-edicao-mamba-negra/?sku=5629114.333894.0.419547": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/grade-com-12-camisas-do-flamengo-26-27-masculina-torcedor/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
     ]
   }
 }
