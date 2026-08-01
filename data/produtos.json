@@ -352,7 +352,13 @@
   },
   "https://www.pantoja11.com.br/nova-camisa-do-manchester-city-25-26-jogador/": {
     "nome": "Nova camisa do Manchester City 25/26 Jogador",
-    "tamanhos": []
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-do-ajax-25-26-torcedor-masculino/": {
     "nome": "Produto Pantoja11",
@@ -1449,6 +1455,18 @@
       "G",
       "GG",
       "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/camisa-do-flamengo-polo-azul-25-26-torcedor/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
     ]
   }
 }
