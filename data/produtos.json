@@ -1587,7 +1587,9 @@
   },
   "https://www.pantoja11.com.br/grade-de-12-camisas-do-vasco-26-27-torcedor/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P"
+    ]
   },
   "https://www.pantoja11.com.br/grade-com-12-camisas-do-palmeiras-25-26-jogador/": {
     "nome": "Produto Pantoja11",
@@ -1657,5 +1659,15 @@
   "https://www.pantoja11.com.br/grade-com-12-camisas-retro-do-brasil-2004-2005-masculino/": {
     "nome": "Produto Pantoja11",
     "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/grade-com-12-camisas-corinthians-treino-2026-27-torcedor-masculina/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
   }
 }
