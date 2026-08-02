@@ -1617,5 +1617,19 @@
   "https://www.pantoja11.com.br/grade-com-9-camisas-do-cruzeiro-third-25-26-torcedor/": {
     "nome": "Produto Pantoja11",
     "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-do-corinthians-versao-jogador-25-26/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/grade-com-12-camisas-retro-do-brasil-2004-2005-masculino/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
   }
 }
