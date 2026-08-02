@@ -197,7 +197,9 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-do-brasil-retro-2002/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P"
+    ]
   },
   "https://www.pantoja11.com.br/kit-infantil-do-palmeiras-25-26-69ab54a0b2b28/": {
     "nome": "Produto Pantoja11",
@@ -1419,7 +1421,9 @@
   },
   "https://www.pantoja11.com.br/kit-infantil-do-flamengo-de-treino-26-27/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P"
+    ]
   },
   "https://www.pantoja11.com.br/grade-com-12-camisas-do-flamengo-branca-26-27-masculina-jogador/": {
     "nome": "Produto Pantoja11",
@@ -1463,7 +1467,9 @@
   },
   "https://www.pantoja11.com.br/grade-com-12-camisas-do-flamengo-26-27-torcedor-masculino/": {
     "nome": "Produto Pantoja11",
-    "tamanhos": []
+    "tamanhos": [
+      "P"
+    ]
   },
   "https://www.pantoja11.com.br/camisa-internacional-iii-preto-25-26-torcedor-masculina/": {
     "nome": "Produto Pantoja11",
@@ -1576,6 +1582,32 @@
       "GG",
       "2XL",
       "3XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/grade-com-12-camisas-da-escocia-26-27-torcedor-masculino/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": []
+  },
+  "https://www.pantoja11.com.br/camisa-do-brasil-2004-2005-retro-ronaldo-9/?sku=5093473.310044.0.419547": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ]
+  },
+  "https://www.pantoja11.com.br/grade-com-12-camisas-do-japao-26-27-torcedor-masculino/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P"
+    ]
+  },
+  "https://www.pantoja11.com.br/grade-com-12-camisas-selecao-alemanha-ii-2026-masculina-torcedor-azul/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P"
     ]
   }
 }
