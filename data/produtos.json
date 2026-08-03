@@ -1,1 +1,329 @@
-
+{
+  "https://www.pantoja11.com.br/camisa-titular-do-fc-barcelona-25-26-masculino-adulto/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/retro/?order=valor-asc": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/camisa-al-hilal-2025-26-home/": {
+    "nome": "Camisa Al Hilal 2025/26 Home - p",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/jogador/?var=419551": {
+    "nome": "Jogador",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/sao-paulo-versao-jogador-24-25/": {
+    "nome": "São Paulo versão Jogador 24/25 - gg",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/grade-fechada/": {
+    "nome": "Grade Fechada",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/camisa-da-argentina-26-27-torcedor-masculino/": {
+    "nome": "Camisa da Argentina 26/27 Torcedor Masculino - gg",
+    "tamanhos": [
+      "P",
+      "GG",
+      "2XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/retro/?var=424987": {
+    "nome": "Retro",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/torcedor-26-27/?order=valor-desc": {
+    "nome": "Torcedor 26/27",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camiseta-regata-los-angeles-lakers-23/?sku=5629194.333894.0.419547": {
+    "nome": "Camiseta Regata Los Angeles Lakers 23",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/torcedor-26-27/?var=424987": {
+    "nome": "Torcedor 26/27",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/torcedor/?var=419549": {
+    "nome": "Torcedor 25/26",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-atletico-mg-treino-25-26-amarela-e-preta/": {
+    "nome": "Camisa Atlético Mineiro Treino 25/26 Amarela e Preta - 2xl",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/central/pedidos": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/camisa-paris-saint-germain-psg-away-21-22-torcedor-masculina-branco-e-rosa/": {
+    "nome": "Camisa PSG Away 21/22 Torcedor Masculina - Branco e Rosa - gg",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-do-flamengo-iii-25-26-masculina/": {
+    "nome": "Camisa do Flamengo III 25/26 Masculina - gg",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/torcedor-26-27/?order=produto": {
+    "nome": "Torcedor 26/27",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-retro-brasil-1998-azul-torcedor-masculino/": {
+    "nome": "Camisa Retrô Brasil 1998 - Azul TORCEDOR MASCULINO - g",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/torcedor-26-27/?order=view": {
+    "nome": "Torcedor 26/27",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-selecao-espanha-i-2026-masculina-torcedor-vermelho-e-azul/": {
+    "nome": "Camisa Seleção Espanha I 2026 - Masculina Torcedor - Vermelho e Azul - gg",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-do-palmeiras-26-27-feminina-6a1b7351c187d/": {
+    "nome": "Camisa do Palmeiras 26/27 Feminina - p",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-do-brasil-26-27-torcedor-masculino-vazamento/": {
+    "nome": "Camisa do Brasil 26/27 Torcedor masculino (Vazamento) - p",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?var=419549": {
+    "nome": "BASQUETE NBA",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-selecao-alemanha-ii-2026-masculina-torcedor-azul/": {
+    "nome": "Camisa Seleção Alemanha II 2026 - Masculina Torcedor - Azul - m",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/promocao/?var=419551": {
+    "nome": "Promoção",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/copa-do-mundo-26-27/?order=produto": {
+    "nome": "Copa do mundo 26/27",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-selecao-brasil-ii-azul-25-26-vai-com-as-estrelas-no-escudo/": {
+    "nome": "Camisa Seleção Brasil II Azul 25/26 (VAI COM AS ESTRELAS NO ESCUDO) Versãojogador",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-do-palmeiras-mundial-25-26-jogador/": {
+    "nome": "Camisa do Palmeiras Mundial 25/26 Jogador - p",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-corinthians-pre-jogo-2026-27-torcedor-masculina/": {
+    "nome": "Camisa Corinthians Pré-Jogo 2026/27 Torcedor Masculina - p",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-do-borussia-dortmund-26-27-torcedor-masculina/": {
+    "nome": "Camisa do Borussia Dortmund 26/27 Torcedor Masculina - p",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/retro/?var=419551": {
+    "nome": "Retro",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL",
+      "4XL",
+      "3XL"
+    ],
+    "esgotado": false
+  }
+}
