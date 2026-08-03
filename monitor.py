@@ -49,8 +49,7 @@ def carregar_historico():
             with open(ARQUIVO_HISTORICO, "r", encoding="utf-8") as f:
                 dados = json.load(f)
                 return dados if isinstance(dados, dict) else {}
-        except Exception as e:
-            print(f"⚠️ Erro ao carregar histórico: {e}")
+        except Exception:
             return {}
     return {}
 
@@ -62,68 +61,90 @@ def salvar_historico(historico):
     except Exception as e:
         print(f"❌ Erro ao salvar histórico: {e}")
 
-def verificar_esgotado_js(el):
-    """Verifica estilos CSS de riscado/desabilitado no navegador"""
-    try:
-        return el.evaluate("""(node) => {
-            const classes = (node.className || '').toString().toLowerCase();
-            const parentClasses = (node.parentElement ? node.parentElement.className || '' : '').toString().toLowerCase();
-            const style = window.getComputedStyle(node);
-            const parentStyle = node.parentElement ? window.getComputedStyle(node.parentElement) : null;
-            
-            const isDisabled = node.disabled || node.getAttribute('disabled') !== null;
-            const hasLineThrough = style.textDecoration.includes('line-through') || (parentStyle && parentStyle.textDecoration.includes('line-through'));
-            const isCrossed = classes.includes('crossed') || classes.includes('slash') || parentClasses.includes('crossed') || parentClasses.includes('slash');
-            const isOutOfStock = classes.includes('out-of-stock') || classes.includes('esgotado') || classes.includes('indisponivel') || classes.includes('disabled') || classes.includes('off') || classes.includes('unavailable');
-            const parentIsOutOfStock = parentClasses.includes('out-of-stock') || parentClasses.includes('esgotado') || parentClasses.includes('indisponivel') || parentClasses.includes('disabled') || parentClasses.includes('off') || parentClasses.includes('unavailable');
-            const opacity = parseFloat(style.opacity);
-            
-            return isDisabled || hasLineThrough || isCrossed || isOutOfStock || parentIsOutOfStock || opacity < 0.6;
-        }""")
-    except Exception:
-        return True
-
-def extrair_dados_do_produto(page, url):
+def extrair_estoque_via_json(page, url):
+    """
+    Método de Ouro: Pega os dados brutos de produto/variantes inseridos na página.
+    """
     tamanhos_disponiveis = []
     nome_produto = ""
+
     try:
-        page.goto(url, wait_until="domcontentloaded", timeout=20000)
-        page.wait_for_timeout(1500)
-        
-        content = page.content()
-        soup = BeautifulSoup(content, "html.parser")
-        
-        # Pega o título principal do H1 da página de produto
-        titulo_el = soup.select_one(".product-name, .product-title, h1.page-title, h1")
-        if titulo_el:
-            nome_raw = titulo_el.get_text(strip=True)
-            partes = nome_raw.split(" - ")
-            
-            # Se o título termina com o tamanho (ex: "Camisa... - gg"), remove o sufixo
-            if len(partes) > 1 and partes[-1].strip().upper() in TAMANHOS_DESEJADOS:
-                nome_produto = " - ".join(partes[:-1])
-            else:
-                nome_produto = nome_raw
-        
-        # Inspeciona caixas de tamanho
-        elementos = page.query_selector_all("label, button, li, option, div, span, a")
-        
-        for el in elementos:
+        page.goto(url, wait_until="networkidle", timeout=25000)
+        page.wait_for_timeout(1000)
+
+        # 1. Tenta extrair dados estruturados JSON-LD do HTML
+        scripts_json = page.query_selector_all("script[type='application/ld+json']")
+        for script in scripts_json:
             try:
-                texto = el.inner_text().strip().upper()
+                conteudo = script.inner_text().strip()
+                if not conteudo:
+                    continue
+                dados_json = json.loads(conteudo)
                 
-                for tam in TAMANHOS_DESEJADOS:
-                    if texto == tam or texto == f"TAMANHO {tam}" or texto == f"TAM {tam}":
-                        esgotado = verificar_esgotado_js(el)
-                        if not esgotado and tam not in tamanhos_disponiveis:
-                            tamanhos_disponiveis.append(tam)
+                # Trata listas ou dicionários
+                itens = dados_json if isinstance(dados_json, list) else [dados_json]
+                for item in itens:
+                    if item.get("@type") == "Product":
+                        nome_produto = item.get("name", "")
+                        offers = item.get("offers", [])
+                        if isinstance(offers, dict):
+                            offers = [offers]
+                        
+                        for offer in offers:
+                            availability = str(offer.get("availability", "")).lower()
+                            sku_name = str(offer.get("name", "")).upper()
+                            
+                            # Verifica se o SKU/variante está em estoque
+                            if "instock" in availability:
+                                for tam in TAMANHOS_DESEJADOS:
+                                    if f" {tam} " in f" {sku_name} " or sku_name.endswith(f" {tam}") or sku_name == tam:
+                                        if tam not in tamanhos_disponiveis:
+                                            tamanhos_disponiveis.append(tam)
             except Exception:
                 continue
 
+        # 2. Se o JSON-LD não retornar variantes, faz a inspeção interativa de atributos DOM reais
+        if not tamanhos_disponiveis:
+            content = page.content()
+            soup = BeautifulSoup(content, "html.parser")
+            
+            if not nome_produto:
+                titulo_el = soup.select_one(".product-name, .product-title, h1.page-title, h1")
+                if titulo_el:
+                    nome_produto = titulo_el.get_text(strip=True)
+
+            # Inspeciona os seletores nativos de variante da loja
+            variantes = page.query_selector_all("[data-variant], .variant-option, select option, label.tamanho")
+            for var in variantes:
+                try:
+                    texto = var.inner_text().strip().upper()
+                    # Avalia atributos reais do estado da variante no JS
+                    em_estoque = page.evaluate("""(el) => {
+                        const disabled = el.disabled || el.getAttribute('disabled') !== null;
+                        const outOfStockClass = el.className.includes('out-of-stock') || el.className.includes('indisponivel') || el.className.includes('crossed');
+                        const parent = el.parentElement;
+                        const parentDisabled = parent ? (parent.className.includes('out-of-stock') || parent.className.includes('indisponivel')) : false;
+                        return !disabled && !outOfStockClass && !parentDisabled;
+                    }""", var)
+                    
+                    if em_estoque:
+                        for tam in TAMANHOS_DESEJADOS:
+                            if texto == tam or texto == f"TAMANHO {tam}" or texto == f"TAM {tam}":
+                                if tam not in tamanhos_disponiveis:
+                                    tamanhos_disponiveis.append(tam)
+                except Exception:
+                    continue
+
     except Exception as e:
-        print(f"⚠️ Erro ao checar produto em {url}: {e}")
-        
-    return nome_produto, tamanhos_disponiveis
+        print(f"⚠️ Erro ao extrair dados de {url}: {e}")
+
+    # Limpa o nome do produto removendo sufixos redundantes de tamanho
+    if nome_produto:
+        partes = nome_produto.split(" - ")
+        if len(partes) > 1 and partes[-1].strip().upper() in TAMANHOS_DESEJADOS:
+            nome_produto = " - ".join(partes[:-1])
+
+    return nome_produto.strip(), tamanhos_disponiveis
 
 def raspar_categorias_exatas(page):
     print("🌐 Mapeando catálogo da Pantoja11...")
@@ -194,14 +215,14 @@ def main():
                 break
 
             if link not in historico:
-                nome_real, tamanhos_atuais = extrair_dados_do_produto(page, link)
+                nome_real, tamanhos_atuais = extrair_estoque_via_json(page, link)
                 
                 nomes_invalidos = ["basquete nba", "promoção", "copa do mundo 26/27", "torcedor", "jogador", "retrô", ""]
                 if nome_real.lower().strip() in nomes_invalidos or len(nome_real) < 5:
                     print(f"⚠️ Ignorado por não ser produto válido: {link}")
                     continue
 
-                print(f"✨ Processando produto: {nome_real}")
+                print(f"✨ Processando produto: {nome_real} | Tamanhos reais: {tamanhos_atuais}")
 
                 if tamanhos_atuais:
                     str_tamanhos = ", ".join(tamanhos_atuais)
@@ -226,7 +247,7 @@ def main():
                 break
 
             if not dados.get("esgotado", False):
-                _, tamanhos_atuais = extrair_dados_do_produto(page, link)
+                _, tamanhos_atuais = extrair_estoque_via_json(page, link)
 
                 if not tamanhos_atuais:
                     msg = (
@@ -251,4 +272,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-                      
