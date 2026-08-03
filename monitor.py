@@ -258,7 +258,32 @@ def raspar_categorias_exatas(page):
 def main():
     historico = carregar_historico()
 
-    with sync_playwright() as p:
+    from playwright_stealth import stealth_sync
+
+# ... dentro da função main():
+with sync_playwright() as p:
+    # Lança o navegador com argumentos que desativam as flags de automação
+    browser = p.chromium.launch(
+        headless=True,
+        args=[
+            '--disable-blink-features=AutomationControlled',
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+        ]
+    )
+    
+    context = browser.new_context(
+        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        viewport={'width': 1920, 'height': 1080},
+        locale="pt-BR"
+    )
+    
+    page = context.new_page()
+    
+    # APLICA A CAMUFLAGEM STEALTH
+    stealth_sync(page)
+    
+    # ... segue o restante da sua lógica
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         page = context.new_page()
