@@ -1669,5 +1669,333 @@
       "GG",
       "2XL"
     ]
+  },
+  "https://www.pantoja11.com.br/./": {
+    "nome": "Comprar BASQUETE NBA",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/dri-fit/": {
+    "nome": "Dri Fit",
+    "tamanhos": [
+      "P",
+      "M",
+      "G"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/dropshipping/": {
+    "nome": "DROPSHIPPING",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/emprego/": {
+    "nome": "Emprego",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/feminino/": {
+    "nome": "Feminino",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/grade-fechada/": {
+    "nome": "Grade Fechada",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/iphone/": {
+    "nome": "IPHONE",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/personalizacao-criativas/": {
+    "nome": "PERSONALIZAÇÃO CRIATIVAS",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/central/": {
+    "nome": "Olá, Entre ou cadastre-se",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/mailto:marcuspantoj4@gmail.com": {
+    "nome": "marcuspantoj4@gmail.com",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/fale-conosco/": {
+    "nome": "Envie uma Mensagem",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/central/pedidos": {
+    "nome": "Pedidos",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/www.pantoja11.com.br/": {
+    "nome": "Página inicial",
+    "tamanhos": [],
+    "esgotado": true
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?order=valor-asc": {
+    "nome": "MENOR PREÇO",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?order=valor-desc": {
+    "nome": "MAIOR PREÇO",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?order=produto": {
+    "nome": "ORDEM ALFABÉTICA",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?order=lancamento": {
+    "nome": "NOVIDADES",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?order=view": {
+    "nome": "MAIS POPULARES",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?var=419547": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?var=419548": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?var=419549": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?var=419550": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/basquete-nba/?var=419551": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/regata-nba-los-angeles-lakers-24/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/regata-nba-los-angeles-lakers-24/?sku=5629315.333894.0.419547": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/regata-nba-los-angeles-lakers-statement-edition-kobe-bryant-24/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/regata-nba-los-angeles-lakers-statement-edition-kobe-bryant-24/?sku=5629301.333894.0.419547": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/jersey-nba-golden-state-warriors-curry-30/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/jersey-nba-golden-state-warriors-curry-30/?sku=5629269.333894.0.419547": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/regata-golden-state-warriors-swingman-icon-edition-30/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/regata-golden-state-warriors-swingman-icon-edition-30/?sku=5629216.333894.0.419547": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-do-lakers-2023-edicao-especial-23/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-do-lakers-2023-edicao-especial-23/?sku=5629198.333894.0.419547": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camiseta-regata-los-angeles-lakers-23/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camiseta-regata-los-angeles-lakers-23/?sku=5629194.333894.0.419547": {
+    "nome": "Abrir completo",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
+  },
+  "https://www.pantoja11.com.br/camisa-do-lakers-2023-edicao-especial-24/": {
+    "nome": "Produto Pantoja11",
+    "tamanhos": [
+      "P",
+      "M",
+      "G",
+      "GG",
+      "2XL"
+    ],
+    "esgotado": false
   }
 }
