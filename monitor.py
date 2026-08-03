@@ -6,12 +6,6 @@ import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
-# Importação compatível do playwright-stealth
-try:
-    from playwright_stealth import stealth_sync
-except ImportError:
-    from playwright_stealth.stealth import stealth_sync
-
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
 
@@ -213,20 +207,26 @@ def main():
             args=[
                 '--disable-blink-features=AutomationControlled',
                 '--no-sandbox',
-                '--disable-setuid-sandbox'
+                '--disable-setuid-sandbox',
+                '--disable-infobars',
+                '--window-size=1920,1080'
             ]
         )
         
         context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             viewport={'width': 1920, 'height': 1080},
             locale="pt-BR"
         )
+
+        # Oculta a flag navigator.webdriver de forma nativa e robusta
+        context.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            });
+        """)
         
         page = context.new_page()
-        
-        # Aplica a camuflagem stealth na página
-        stealth_sync(page)
 
         links_encontrados = raspar_categorias_exatas(page)
         
