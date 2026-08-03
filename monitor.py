@@ -59,49 +59,61 @@ def salvar_historico(historico):
         json.dump(historico, f, ensure_ascii=False, indent=2)
 
 def extrair_dados_do_produto(page, url):
-    """Acessa a página do produto, extrai o título EXATO do produto e filtra tamanhos reais"""
+    """Acessa a página do produto, extrai o título real e avalia minuciosamente quais tamanhos NÃO estão riscados/esgotados"""
     tamanhos_disponiveis = []
     nome_produto = ""
     try:
-        page.goto(url, wait_until="domcontentloaded", timeout=15000)
-        page.wait_for_timeout(1200)
+        page.goto(url, wait_until="networkidle", timeout=20000)
+        page.wait_for_timeout(1500) # Aguarda a renderização completa do CSS/JS dos tamanhos
         
         content = page.content()
         soup = BeautifulSoup(content, "html.parser")
         
-        # 1. Pega o título principal da página de produto
-        # Tenta seletores comuns de plataformas e recai no H1
+        # 1. Pega o título limpo do H1 do produto (remove ' - gg', ' - p' ou variações anexadas ao título)
         titulo_el = soup.select_one(".product-name, .product-title, h1.page-title, h1")
         if titulo_el:
-            nome_produto = titulo_el.get_text(strip=True)
+            nome_raw = titulo_el.get_text(strip=True)
+            # Limpa sufixos de tamanho no nome caso existam
+            nome_produto = nome_raw.split(" - ")[0] if " - " in nome_raw else nome_raw
+            # Caso haja complemento relevante de cor/categoria mantem
+            if " - " in nome_raw and not any(t.lower() == nome_raw.split(" - ")[-1].lower() for t.lower() in TAMANHOS_DESEJADOS):
+                nome_produto = nome_raw
         
-        # 2. Varredura rigorosa de tamanhos disponíveis no DOM via Playwright
-        elementos_tamanho = page.query_selector_all("button, option, li, label, span, div")
+        # 2. Varredura via JS dentro do navegador para verificar estado de cada elemento de tamanho
+        # Pega todos os seletores de opção de tamanho na página
+        elementos = page.query_selector_all("label, button, li, option, div, span, a")
         
-        for el in elementos_tamanho:
-            texto = el.inner_text().strip().upper()
-            
-            for tam in TAMANHOS_DESEJADOS:
-                if texto == tam or texto == f"TAMANHO {tam}" or texto == f"TAM {tam}":
-                    
-                    is_disabled = el.is_disabled()
-                    classes = (el.get_attribute("class") or "").lower()
-                    data_stock = (el.get_attribute("data-stock") or "").lower()
-                    
-                    parent_classes = page.evaluate("(el) => el.parentElement ? el.parentElement.className : ''", el).lower()
-                    
-                    termos_indisponiveis = ["disabled", "indisponivel", "esgotado", "out-of-stock", "unavailable", "off", "soldout"]
-                    
-                    is_esgotado = (
-                        is_disabled or
-                        data_stock == "false" or
-                        any(term in classes for term in termos_indisponiveis) or
-                        any(term in parent_classes for term in termos_indisponiveis)
-                    )
-                    
-                    if not is_esgotado and tam not in tamanhos_disponiveis:
-                        tamanhos_disponiveis.append(tam)
+        for el in elementos:
+            try:
+                texto = el.inner_text().strip().upper()
+                
+                for tam in TAMANHOS_DESEJADOS:
+                    if texto == tam or texto == f"TAMANHO {tam}" or texto == f"TAM {tam}":
                         
+                        # Executa um script JS no elemento para validar todas as formas de estado 'indisponível / riscado'
+                        dados_status = page.evaluate("""(el) => {
+                            const classes = (el.className || '').toString().toLowerCase();
+                            const parentClasses = (el.parentElement ? el.parentElement.className || '' : '').toString().toLowerCase();
+                            const style = window.getComputedStyle(el);
+                            const parentStyle = el.parentElement ? window.getComputedStyle(el.parentElement) : null;
+                            
+                            const isDisabled = el.disabled || el.getAttribute('disabled') !== null;
+                            const hasLineThrough = style.textDecoration.includes('line-through') || (parentStyle && parentStyle.textDecoration.includes('line-through'));
+                            const isCrossed = classes.includes('crossed') || classes.includes('slash') || parentClasses.includes('crossed') || parentClasses.includes('slash');
+                            const isOutOfStock = classes.includes('out-of-stock') || classes.includes('esgotado') || classes.includes('indisponivel') || classes.includes('disabled') || classes.includes('off') || classes.includes('unavailable');
+                            const parentIsOutOfStock = parentClasses.includes('out-of-stock') || parentClasses.includes('esgotado') || parentClasses.includes('indisponivel') || parentClasses.includes('disabled') || parentClasses.includes('off') || parentClasses.includes('unavailable');
+                            const opacity = parseFloat(style.opacity);
+                            
+                            return {
+                                esgotado: isDisabled || hasLineThrough || isCrossed || isOutOfStock || parentIsOutOfStock || opacity < 0.6
+                            };
+                        }""", el)
+                        
+                        if not dados_status["esgotado"] and tam not in tamanhos_disponiveis:
+                            tamanhos_disponiveis.append(tam)
+            except Exception:
+                continue
+
     except Exception as e:
         print(f"⚠️ Erro ao checar {url}: {e}")
         
@@ -111,7 +123,6 @@ def raspar_categorias_exatas():
     print("🌐 Mapeando catálogo da Pantoja11...")
     links_encontrados = set()
     
-    # Palavras e caminhos que NUNCA são produtos (categorias, filtros, institucional)
     BLOQUEIO_URL = [
         "carrinho", "checkout", "minha-conta", "politica", "contato", "sobre", 
         "instagram", "whatsapp", "basquete-nba", "copa-do-mundo", "jogador", 
@@ -143,21 +154,15 @@ def raspar_categorias_exatas():
                     link_completo = href if href.startswith("http") else f"{URL_BASE}/{href.lstrip('/')}"
                     link_limpo = link_completo.rstrip("/")
 
-                    # Descarta se não for do site ou se for a própria URL da categoria
                     if "pantoja11.com.br" not in link_completo:
                         continue
 
-                    # REGRA DE PRODUTO: O link deve ter estrutura de página de produto (geralmente mais profunda)
-                    # e não pode ser nenhuma das páginas institucionais ou de categoria conhecidas
                     is_categoria_pura = any(link_limpo == cat.rstrip("/") for cat in URLS_CATEGORIAS)
                     
                     if not is_categoria_pura:
-                        # Verifica se é uma subcategoria ou página de listagem
                         partes_url = [p for p in link_limpo.replace(URL_BASE, "").split("/") if p]
                         
-                        # Links de produtos reais costumam ser únicos e não apenas rotas de categoria curtas
                         if len(partes_url) >= 1:
-                            # Se for o link da categoria exata sem o slash final, pula
                             if any(p.lower() in BLOQUEIO_URL for p in partes_url) and len(partes_url) == 1:
                                 continue
                             
@@ -191,7 +196,6 @@ def main():
             if link not in historico:
                 nome_real, tamanhos_atuais = extrair_dados_do_produto(page, link)
                 
-                # Se o nome extraído for o nome de uma categoria por falha ou estiver vazio, ignora o envio
                 nomes_invalidos = ["basquete nba", "promoção", "copa do mundo 26/27", "torcedor", "jogador", "retrô", ""]
                 if nome_real.lower().strip() in nomes_invalidos or len(nome_real) < 5:
                     print(f"⚠️ Link ignorado por não ser um produto válido: {link}")
@@ -204,7 +208,7 @@ def main():
                     msg = (
                         f"🚨 **Novo produto na Pantoja11!**\n\n"
                         f"📌 **Item:** {nome_real}\n"
-                        f"📏 **Tamanhos:** {str_tamanhos}\n"
+                        f"📏 **Tamanhos Disponíveis:** {str_tamanhos}\n"
                         f"🔗 [Acessar Item]({link})"
                     )
                     if enviar_mensagem_telegram(msg):
@@ -247,4 +251,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+        
