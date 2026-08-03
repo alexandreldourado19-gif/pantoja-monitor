@@ -219,6 +219,8 @@ def main():
         )
         
         page = context.new_page()
+        
+        # Aplicação da camuflagem anti-bot sem falhas de importação
         stealth_sync(page)
 
         links_encontrados = raspar_categorias_exatas(page)
