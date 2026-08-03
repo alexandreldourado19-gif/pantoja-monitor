@@ -32,7 +32,7 @@ NOMES_INVALIDOS = [
 
 def enviar_mensagem_telegram(mensagem):
     if not TELEGRAM_TOKEN or not CHAT_ID:
-        print("❌ ERRO: TELEGRAM_TOKEN ou CHAT_ID ausentes nos Secrets!")
+        print("❌ ERRO: TELEGRAM_TOKEN ou CHAT_ID ausentes nas variáveis de ambiente!")
         return False
     
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -44,9 +44,12 @@ def enviar_mensagem_telegram(mensagem):
     try:
         r = requests.post(url, json=payload, timeout=10)
         r.raise_for_status()
+        print("✅ Mensagem enviada com sucesso no Telegram!")
         return True
     except Exception as e:
-        print(f"❌ Erro no Telegram: {e}")
+        print(f"❌ Erro ao enviar para o Telegram: {e}")
+        if 'r' in locals():
+            print(f"   Resposta da API: {r.text}")
         return False
 
 def carregar_historico():
@@ -69,9 +72,6 @@ def salvar_historico(historico):
         print(f"❌ Erro ao salvar histórico: {e}")
 
 def extrair_dados_do_produto(page, url):
-    """
-    Intercepta a API interna da wBuy (action.php) para pegar o estoque real e sem erros.
-    """
     dados_api = {}
     
     def interceptar_resposta(response):
@@ -91,7 +91,6 @@ def extrair_dados_do_produto(page, url):
         page.on("response", interceptar_resposta)
         page.goto(url, wait_until="networkidle", timeout=25000)
 
-        # 1. Pega o nome do produto no DOM
         soup = BeautifulSoup(page.content(), "html.parser")
         seletores_nome = ["h1.nome_produto", ".product-name", ".product-title", "h1.page-title", "h1"]
         for seletor in seletores_nome:
@@ -100,13 +99,11 @@ def extrair_dados_do_produto(page, url):
                 nome_produto = el_nome.get_text(strip=True)
                 break
 
-        # Fallback via regex se o DOM falhar
         if not nome_produto:
             match_nome = re.search(r"var\s+nome_produto\s*=\s*'([^']+)'", page.content())
             if match_nome:
                 nome_produto = match_nome.group(1)
 
-        # 2. Processa os dados retornados pela API (action.php)
         grid = dados_api.get("grade", {}) or dados_api.get("variacoes", {}) or dados_api
         
         if isinstance(grid, dict):
@@ -122,7 +119,6 @@ def extrair_dados_do_produto(page, url):
                             if em_estoque and t_desejado not in tamanhos_disponiveis:
                                 tamanhos_disponiveis.append(t_desejado)
 
-        # 3. Fallback de variações via DOM (.variacoes .item) caso a API não tenha sido capturada
         if not variantes:
             itens_variacao = soup.select(".variacoes .item, .grid-variacoes .item, .variacao-item")
             for item in itens_variacao:
@@ -143,7 +139,6 @@ def extrair_dados_do_produto(page, url):
     except Exception as e:
         print(f"⚠️ Erro ao capturar API em {url}: {e}")
 
-    # Limpeza final no nome do produto
     if nome_produto:
         partes = nome_produto.split(" - ")
         if len(partes) > 1 and partes[-1].strip().upper() in TAMANHOS_DESEJADOS:
@@ -165,7 +160,6 @@ def raspar_categorias_exatas(page):
         try:
             print(f"🔍 Varrendo categoria: {url_categoria}")
             page.goto(url_categoria, wait_until="domcontentloaded", timeout=20000)
-            
             page.mouse.wheel(0, 1500)
 
             soup = BeautifulSoup(page.content(), "html.parser")
@@ -185,11 +179,9 @@ def raspar_categorias_exatas(page):
                 
                 if not is_categoria_pura:
                     partes_url = [p for p in link_limpo.replace(URL_BASE, "").split("/") if p]
-                    
                     if len(partes_url) >= 1:
                         if any(p.lower() in BLOQUEIO_URL for p in partes_url) and len(partes_url) == 1:
                             continue
-                        
                         links_encontrados.add(link_completo)
 
         except Exception as e:
@@ -199,7 +191,14 @@ def raspar_categorias_exatas(page):
     return list(links_encontrados)
 
 def main():
+    print("🚀 Iniciando monitor da Pantoja11...")
+    
+    # TESTE DE CONEXÃO COM TELEGRAM
+    print("📱 Testando envio para o Telegram...")
+    enviar_mensagem_telegram("🤖 **Monitor Pantoja11 Ativo!**\nRodada iniciada com sucesso.")
+
     historico = carregar_historico()
+    print(f"📊 Histórico atual contém {len(historico)} produtos cadastrados.")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -208,8 +207,7 @@ def main():
                 '--disable-blink-features=AutomationControlled',
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-infobars',
-                '--window-size=1920,1080'
+                '--disable-infobars'
             ]
         )
         
@@ -219,7 +217,6 @@ def main():
             locale="pt-BR"
         )
 
-        # Oculta a flag navigator.webdriver de forma nativa e robusta
         context.add_init_script("""
             Object.defineProperty(navigator, 'webdriver', {
                 get: () => undefined
@@ -227,7 +224,6 @@ def main():
         """)
         
         page = context.new_page()
-
         links_encontrados = raspar_categorias_exatas(page)
         
         houve_alteracao = False
@@ -236,16 +232,18 @@ def main():
         # 1. NOVOS PRODUTOS / ATUALIZAÇÃO DE VARIANTES
         for link in links_encontrados:
             if processados >= LIMITE_PRODUTOS_POR_RODADA:
+                print("🛑 Limite de produtos por rodada atingido.")
                 break
 
             if link not in historico:
+                print(f"🔍 Analisando novo link encontrado: {link}")
                 nome_real, variantes_atuais, tamanhos_atuais = extrair_dados_do_produto(page, link)
                 
                 if not nome_real or len(nome_real) < 5 or any(x in nome_real.lower() for x in NOMES_INVALIDOS):
                     print(f"⚠️ Ignorado por ser categoria/inválido: {link}")
                     continue
 
-                print(f"✨ Processando produto: {nome_real} | Tamanhos: {tamanhos_atuais}")
+                print(f"✨ Novo Produto: {nome_real} | Tamanhos em estoque: {tamanhos_atuais}")
 
                 if tamanhos_atuais:
                     str_tamanhos = ", ".join(tamanhos_atuais)
@@ -274,7 +272,7 @@ def main():
                     }
                     houve_alteracao = True
 
-        # 2. VERIFICAÇÃO DE REPOSIÇÃO E ESGOTAMENTO NO HISTÓRICO
+        # 2. VERIFICAÇÃO DE ESGOTAMENTO NO HISTÓRICO
         for link, dados in list(historico.items()):
             if processados >= LIMITE_PRODUTOS_POR_RODADA:
                 break
@@ -300,9 +298,9 @@ def main():
 
     if houve_alteracao:
         salvar_historico(historico)
-        print("✅ Histórico atualizado com sucesso!")
+        print("✅ Histórico atualizado no arquivo JSON com sucesso!")
     else:
-        print("ℹ️ Tudo atualizado. Nenhuma mudança detectada.")
+        print("ℹ️ Tudo verificado. Nenhuma novidade ou mudança de estoque encontrada nesta rodada.")
 
 if __name__ == "__main__":
     main()
