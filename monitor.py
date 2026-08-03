@@ -24,6 +24,26 @@ URLS_CATEGORIAS = [
 TAMANHOS_DESEJADOS = ["P", "M", "G", "GG", "2XL", "3XL", "4XL"]
 LIMITE_PRODUTOS_POR_RODADA = 25
 
+JS_CHECAR_ESTOQUE = """
+(el) => {
+    const classes = (el.className || '').toString().toLowerCase();
+    const parentClasses = (el.parentElement ? el.parentElement.className || '' : '').toString().toLowerCase();
+    const style = window.getComputedStyle(el);
+    const parentStyle = el.parentElement ? window.getComputedStyle(el.parentElement) : null;
+    
+    const isDisabled = el.disabled || el.getAttribute('disabled') !== null;
+    const hasLineThrough = style.textDecoration.includes('line-through') || (parentStyle && parentStyle.textDecoration.includes('line-through'));
+    const isCrossed = classes.includes('crossed') || classes.includes('slash') || parentClasses.includes('crossed') || parentClasses.includes('slash');
+    const isOutOfStock = classes.includes('out-of-stock') || classes.includes('esgotado') || classes.includes('indisponivel') || classes.includes('disabled') || classes.includes('off') || classes.includes('unavailable');
+    const parentIsOutOfStock = parentClasses.includes('out-of-stock') || parentClasses.includes('esgotado') || parentClasses.includes('indisponivel') || parentClasses.includes('disabled') || parentClasses.includes('off') || parentClasses.includes('unavailable');
+    const opacity = parseFloat(style.opacity);
+    
+    return {
+        esgotado: isDisabled || hasLineThrough || isCrossed || isOutOfStock || parentIsOutOfStock || opacity < 0.6
+    };
+}
+"""
+
 def enviar_mensagem_telegram(mensagem):
     if not TELEGRAM_TOKEN or not CHAT_ID:
         print("❌ ERRO: TELEGRAM_TOKEN ou CHAT_ID ausentes nos Secrets!")
@@ -59,28 +79,22 @@ def salvar_historico(historico):
         json.dump(historico, f, ensure_ascii=False, indent=2)
 
 def extrair_dados_do_produto(page, url):
-    """Acessa a página do produto, extrai o título real e avalia minuciosamente quais tamanhos NÃO estão riscados/esgotados"""
     tamanhos_disponiveis = []
     nome_produto = ""
     try:
         page.goto(url, wait_until="networkidle", timeout=20000)
-        page.wait_for_timeout(1500) # Aguarda a renderização completa do CSS/JS dos tamanhos
+        page.wait_for_timeout(1500)
         
         content = page.content()
         soup = BeautifulSoup(content, "html.parser")
         
-        # 1. Pega o título limpo do H1 do produto (remove ' - gg', ' - p' ou variações anexadas ao título)
         titulo_el = soup.select_one(".product-name, .product-title, h1.page-title, h1")
         if titulo_el:
             nome_raw = titulo_el.get_text(strip=True)
-            # Limpa sufixos de tamanho no nome caso existam
             nome_produto = nome_raw.split(" - ")[0] if " - " in nome_raw else nome_raw
-            # Caso haja complemento relevante de cor/categoria mantem
             if " - " in nome_raw and not any(t.lower() == nome_raw.split(" - ")[-1].lower() for t.lower() in TAMANHOS_DESEJADOS):
                 nome_produto = nome_raw
         
-        # 2. Varredura via JS dentro do navegador para verificar estado de cada elemento de tamanho
-        # Pega todos os seletores de opção de tamanho na página
         elementos = page.query_selector_all("label, button, li, option, div, span, a")
         
         for el in elementos:
@@ -89,25 +103,7 @@ def extrair_dados_do_produto(page, url):
                 
                 for tam in TAMANHOS_DESEJADOS:
                     if texto == tam or texto == f"TAMANHO {tam}" or texto == f"TAM {tam}":
-                        
-                        # Executa um script JS no elemento para validar todas as formas de estado 'indisponível / riscado'
-                        dados_status = page.evaluate("""(el) => {
-                            const classes = (el.className || '').toString().toLowerCase();
-                            const parentClasses = (el.parentElement ? el.parentElement.className || '' : '').toString().toLowerCase();
-                            const style = window.getComputedStyle(el);
-                            const parentStyle = el.parentElement ? window.getComputedStyle(el.parentElement) : null;
-                            
-                            const isDisabled = el.disabled || el.getAttribute('disabled') !== null;
-                            const hasLineThrough = style.textDecoration.includes('line-through') || (parentStyle && parentStyle.textDecoration.includes('line-through'));
-                            const isCrossed = classes.includes('crossed') || classes.includes('slash') || parentClasses.includes('crossed') || parentClasses.includes('slash');
-                            const isOutOfStock = classes.includes('out-of-stock') || classes.includes('esgotado') || classes.includes('indisponivel') || classes.includes('disabled') || classes.includes('off') || classes.includes('unavailable');
-                            const parentIsOutOfStock = parentClasses.includes('out-of-stock') || parentClasses.includes('esgotado') || parentClasses.includes('indisponivel') || parentClasses.includes('disabled') || parentClasses.includes('off') || parentClasses.includes('unavailable');
-                            const opacity = parseFloat(style.opacity);
-                            
-                            return {
-                                esgotado: isDisabled || hasLineThrough || isCrossed || isOutOfStock || parentIsOutOfStock || opacity < 0.6
-                            };
-                        }""", el)
+                        dados_status = page.evaluate(JS_CHECAR_ESTOQUE, el)
                         
                         if not dados_status["esgotado"] and tam not in tamanhos_disponiveis:
                             tamanhos_disponiveis.append(tam)
@@ -251,4 +247,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-        
+    
