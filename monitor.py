@@ -38,9 +38,7 @@ JS_CHECAR_ESTOQUE = """
     const parentIsOutOfStock = parentClasses.includes('out-of-stock') || parentClasses.includes('esgotado') || parentClasses.includes('indisponivel') || parentClasses.includes('disabled') || parentClasses.includes('off') || parentClasses.includes('unavailable');
     const opacity = parseFloat(style.opacity);
     
-    return {
-        esgotado: isDisabled || hasLineThrough || isCrossed || isOutOfStock || parentIsOutOfStock || opacity < 0.6
-    };
+    return isDisabled || hasLineThrough || isCrossed || isOutOfStock || parentIsOutOfStock || opacity < 0.6;
 }
 """
 
@@ -82,7 +80,7 @@ def extrair_dados_do_produto(page, url):
     tamanhos_disponiveis = []
     nome_produto = ""
     try:
-        page.goto(url, wait_until="networkidle", timeout=20000)
+        page.goto(url, wait_until="domcontentloaded", timeout=20000)
         page.wait_for_timeout(1500)
         
         content = page.content()
@@ -103,9 +101,9 @@ def extrair_dados_do_produto(page, url):
                 
                 for tam in TAMANHOS_DESEJADOS:
                     if texto == tam or texto == f"TAMANHO {tam}" or texto == f"TAM {tam}":
-                        dados_status = page.evaluate(JS_CHECAR_ESTOQUE, el)
+                        esgotado = el.evaluate(JS_CHECAR_ESTOQUE)
                         
-                        if not dados_status["esgotado"] and tam not in tamanhos_disponiveis:
+                        if not esgotado and tam not in tamanhos_disponiveis:
                             tamanhos_disponiveis.append(tam)
             except Exception:
                 continue
@@ -115,7 +113,7 @@ def extrair_dados_do_produto(page, url):
         
     return nome_produto, tamanhos_disponiveis
 
-def raspar_categorias_exatas():
+def raspar_categorias_exatas(page):
     print("🌐 Mapeando catálogo da Pantoja11...")
     links_encontrados = set()
     
@@ -125,64 +123,58 @@ def raspar_categorias_exatas():
         "promocao", "retro", "torcedor", "categoria", "colecao", "marcas"
     ]
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-        page = context.new_page()
-        
-        for url_categoria in URLS_CATEGORIAS:
-            try:
-                print(f"🔍 Varrendo categoria: {url_categoria}")
-                page.goto(url_categoria, wait_until="networkidle", timeout=25000)
+    for url_categoria in URLS_CATEGORIAS:
+        try:
+            print(f"🔍 Varrendo categoria: {url_categoria}")
+            page.goto(url_categoria, wait_until="domcontentloaded", timeout=25000)
+            
+            for _ in range(2):
+                page.mouse.wheel(0, 1500)
+                page.wait_for_timeout(600)
+
+            content = page.content()
+            soup = BeautifulSoup(content, "html.parser")
+            
+            for a in soup.find_all("a", href=True):
+                href = a["href"].strip()
+                if not href or href.startswith("#") or "javascript:" in href.lower():
+                    continue
                 
-                for _ in range(3):
-                    page.mouse.wheel(0, 1500)
-                    page.wait_for_timeout(800)
+                link_completo = href if href.startswith("http") else f"{URL_BASE}/{href.lstrip('/')}"
+                link_limpo = link_completo.rstrip("/")
 
-                content = page.content()
-                soup = BeautifulSoup(content, "html.parser")
+                if "pantoja11.com.br" not in link_completo:
+                    continue
+
+                is_categoria_pura = any(link_limpo == cat.rstrip("/") for cat in URLS_CATEGORIAS)
                 
-                for a in soup.find_all("a", href=True):
-                    href = a["href"].strip()
-                    if not href or href.startswith("#") or "javascript:" in href.lower():
-                        continue
+                if not is_categoria_pura:
+                    partes_url = [p for p in link_limpo.replace(URL_BASE, "").split("/") if p]
                     
-                    link_completo = href if href.startswith("http") else f"{URL_BASE}/{href.lstrip('/')}"
-                    link_limpo = link_completo.rstrip("/")
-
-                    if "pantoja11.com.br" not in link_completo:
-                        continue
-
-                    is_categoria_pura = any(link_limpo == cat.rstrip("/") for cat in URLS_CATEGORIAS)
-                    
-                    if not is_categoria_pura:
-                        partes_url = [p for p in link_limpo.replace(URL_BASE, "").split("/") if p]
+                    if len(partes_url) >= 1:
+                        if any(p.lower() in BLOQUEIO_URL for p in partes_url) and len(partes_url) == 1:
+                            continue
                         
-                        if len(partes_url) >= 1:
-                            if any(p.lower() in BLOQUEIO_URL for p in partes_url) and len(partes_url) == 1:
-                                continue
-                            
-                            links_encontrados.add(link_completo)
+                        links_encontrados.add(link_completo)
 
-            except Exception as e:
-                print(f"⚠️ Erro ao acessar a categoria {url_categoria}: {e}")
-
-        browser.close()
+        except Exception as e:
+            print(f"⚠️ Erro ao acessar a categoria {url_categoria}: {e}")
 
     print(f"🎯 Mapeamento concluído: {len(links_encontrados)} links de produtos identificados.")
     return list(links_encontrados)
 
 def main():
     historico = carregar_historico()
-    links_encontrados = raspar_categorias_exatas()
-    
-    houve_alteracao = False
-    processados = 0
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
         page = context.new_page()
+
+        links_encontrados = raspar_categorias_exatas(page)
+        
+        houve_alteracao = False
+        processados = 0
 
         # 1. NOVO ITEM DETECTADO
         for link in links_encontrados:
@@ -247,4 +239,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
