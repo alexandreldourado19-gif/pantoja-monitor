@@ -2,37 +2,32 @@ name: Monitor Pantoja11
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Executa a cada 30 minutos
-  workflow_dispatch:        # Permite rodar manualmente no painel
+    - cron: '0 * * * *' # Roda a cada hora
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout do código
+        uses: actions/checkout@v4
 
       - name: Configurar Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Instalar dependências
+      - name: Instalar Dependências
         run: |
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4 playwright
           playwright install chromium
 
-      - name: Executar monitor
+      - name: Executar Monitor
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python monitor.py
-
-      - name: Salvar alterações no histórico
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add data/produtos.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Atualiza histórico de produtos" && git push)
+          python monitor.py
           
