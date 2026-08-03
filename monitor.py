@@ -70,11 +70,65 @@ def salvar_historico(historico):
 
 def extrair_dados_do_produto(page, url):
     """
-    Aguarda a renderização JS dos elementos da wBuy antes de extrair dados.
+    Intercepta a API interna da wBuy (action.php) para pegar o estoque real e sem erros.
     """
+    dados_api = {}
+    
+    def interceptar_resposta(response):
+        # Escuta apenas as chamadas do backend da wBuy
+        if "action.php" in response.url and response.status == 200:
+            try:
+                # Se a resposta for JSON, armazena os dados
+                json_data = response.json()
+                if isinstance(json_data, dict):
+                    dados_api.update(json_data)
+            except Exception:
+                pass
+
     variantes = {}
     tamanhos_disponiveis = []
     nome_produto = ""
+
+    try:
+        # Ativa o ouvinte de rede
+        page.on("response", interceptar_resposta)
+        
+        # Abre a página e espera as requisições assíncronas do backend terminarem
+        page.goto(url, wait_until="networkidle", timeout=25000)
+
+        # 1. Pega o nome do produto no DOM
+        soup = BeautifulSoup(page.content(), "html.parser")
+        seletores_nome = ["h1.nome_produto", ".product-name", ".product-title", "h1.page-title", "h1"]
+        for seletor in seletores_nome:
+            el_nome = soup.select_one(seletor)
+            if el_nome and el_nome.get_text(strip=True):
+                nome_produto = el_nome.get_text(strip=True)
+                break
+
+        # 2. Processa os dados retornados pela API (action.php)
+        # Se a API retornou a grade de estoque
+        grid = dados_api.get("grade", {}) or dados_api.get("variacoes", {}) or dados_api
+        
+        if isinstance(grid, dict):
+            for key, item in grid.items():
+                if isinstance(item, dict):
+                    tam = str(item.get("nome") or item.get("variacao") or item.get("tamanho", "")).upper().strip()
+                    estoque_qtd = int(item.get("estoque", 0) or 0)
+                    em_estoque = estoque_qtd > 0 or item.get("disponivel") is True
+                    
+                    for t_desejado in TAMANHOS_DESEJADOS:
+                        if tam == t_desejado or tam == f"TAMANHO {t_desejado}":
+                            variantes[key] = {"tamanho": t_desejado, "estoque": em_estoque}
+                            if em_estoque and t_desejado not in tamanhos_disponiveis:
+                                tamanhos_disponiveis.append(t_desejado)
+
+        # Desativa o ouvinte para a próxima iteração
+        page.remove_listener("response", interceptar_resposta)
+
+    except Exception as e:
+        print(f"⚠️ Erro ao capturar API em {url}: {e}")
+
+    return nome_produto.strip(), variantes, tamanhos_disponiveis
 
     try:
         page.goto(url, wait_until="domcontentloaded", timeout=20000)
