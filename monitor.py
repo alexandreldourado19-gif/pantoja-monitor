@@ -24,7 +24,7 @@ CATEGORIAS_ALVO = [
 ]
 
 TAMANHOS_DESEJADOS = ["P", "M", "G", "GG", "2XL", "3XL", "4XL"]
-LIMITE_PRODUTOS_POR_RODADA = 15  # Evita estourar o tempo do GitHub e bloqueio do Telegram
+LIMITE_PRODUTOS_POR_RODADA = 25
 
 def enviar_mensagem_telegram(mensagem):
     if not TELEGRAM_TOKEN or not CHAT_ID:
@@ -34,7 +34,8 @@ def enviar_mensagem_telegram(mensagem):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
         "chat_id": CHAT_ID,
-        "text": mensagem
+        "text": mensagem,
+        "parse_mode": "Markdown"
     }
     try:
         r = requests.post(url, json=payload, timeout=10)
@@ -49,17 +50,7 @@ def carregar_historico():
         try:
             with open(ARQUIVO_HISTORICO, "r", encoding="utf-8") as f:
                 dados = json.load(f)
-                if isinstance(dados, dict):
-                    return dados
-                elif isinstance(dados, list):
-                    novo_hist = {}
-                    for item in dados:
-                        if isinstance(item, dict) and "link" in item:
-                            novo_hist[item["link"]] = {
-                                "nome": item.get("nome", "Produto"),
-                                "tamanhos": []
-                            }
-                    return novo_hist
+                return dados if isinstance(dados, dict) else {}
         except Exception:
             return {}
     return {}
@@ -70,24 +61,30 @@ def salvar_historico(historico):
         json.dump(historico, f, ensure_ascii=False, indent=2)
 
 def extrair_tamanhos_da_pagina(page, url):
+    """Verificação precisa focada nas caixas de seleção de tamanho do produto"""
     tamanhos_disponiveis = []
     try:
-        page.goto(url, wait_until="domcontentloaded", timeout=20000)
-        page.wait_for_timeout(1000)
+        # Bloqueia imagens/fontes para carregar 3x mais rápido
+        page.route("**/*.{png,jpg,jpeg,svg,woff,woff2}", lambda route: route.abort())
+        page.goto(url, wait_until="domcontentloaded", timeout=15000)
         
         content = page.content()
         soup = BeautifulSoup(content, "html.parser")
         
-        elementos = soup.find_all(["button", "option", "li", "span", "div"])
+        # Filtra elementos específicos de opções/grade de tamanho
+        elementos = soup.find_all(["button", "option", "li", "a", "label", "span"])
         
         for el in elementos:
             texto = el.get_text(strip=True).upper()
             classes = " ".join(el.get("class", [])).lower()
-            if "disabled" in classes or "indisponivel" in classes or "esgotado" in classes or el.get("disabled"):
+            
+            # Descarta itens indisponíveis ou esgotados
+            if any(term in classes for term in ["disabled", "indisponivel", "esgotado", "out-of-stock"]) or el.get("disabled"):
                 continue
                 
             for tam in TAMANHOS_DESEJADOS:
-                if texto == tam or f"tamanho {tam}" in texto.lower():
+                # Garante correspondência exata para não pegar palavras soltas
+                if texto == tam or texto == f"TAMANHO {tam}" or texto == f"TAM {tam}":
                     if tam not in tamanhos_disponiveis:
                         tamanhos_disponiveis.append(tam)
                         
@@ -98,18 +95,19 @@ def extrair_tamanhos_da_pagina(page, url):
 
 def raspar_links_da_home():
     print("🌐 Carregando a loja Pantoja11...")
+    produtos_encontrados = {}
     
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         )
         page = context.new_page()
         
         try:
-            page.goto(URL_ALVO, wait_until="networkidle", timeout=60000)
+            page.goto(URL_ALVO, wait_until="domcontentloaded", timeout=30000)
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            page.wait_for_timeout(2000)
+            page.wait_for_timeout(1000)
             html_content = page.content()
         except Exception as e:
             print(f"❌ Erro ao carregar a home: {e}")
@@ -121,8 +119,6 @@ def raspar_links_da_home():
     soup = BeautifulSoup(html_content, "html.parser")
     todos_links = soup.find_all("a", href=True)
 
-    produtos_encontrados = {}
-
     for a in todos_links:
         href = a["href"].strip()
         texto = a.get_text(strip=True)
@@ -130,15 +126,9 @@ def raspar_links_da_home():
         if not href or "javascript:" in href.lower() or href.startswith("#"):
             continue
 
-        if href.startswith("http"):
-            link_completo = href
-        else:
-            path = href.lstrip("./").lstrip("/")
-            link_completo = f"https://www.pantoja11.com.br/{path}"
+        link_completo = href if href.startswith("http") else f"https://www.pantoja11.com.br/{href.lstrip('./').lstrip('/')}"
 
-        pertence_categoria = any(cat in link_completo.lower() for cat in CATEGORIAS_ALVO)
-
-        if pertence_categoria and "pantoja11.com.br" in link_completo:
+        if any(cat in link_completo.lower() for cat in CATEGORIAS_ALVO) and "pantoja11.com.br" in link_completo:
             nome = texto if len(texto) >= 3 else "Produto Pantoja11"
             if link_completo not in produtos_encontrados:
                 produtos_encontrados[link_completo] = nome
@@ -150,77 +140,79 @@ def main():
     produtos_encontrados = raspar_links_da_home()
     
     houve_alteracao = False
-    processados_nesta_rodada = 0
+    processados = 0
 
-    print(f"🔎 Encontrados {len(produtos_encontrados)} links na home. Processando pendentes...")
+    print(f"🔎 Encontrados {len(produtos_encontrados)} links. Processando varredura...")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
+        context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
         page = context.new_page()
 
         for link, nome in produtos_encontrados.items():
-            # Se já atingiu o limite seguro da rodada, para e deixa o restante para daqui 30 min
-            if processados_nesta_rodada >= LIMITE_PRODUTOS_POR_RODADA:
-                print(f"⏳ Limite de {LIMITE_PRODUTOS_POR_RODADA} itens atingido nesta rodada. O restante será verificado na próxima execução.")
+            if processados >= LIMITE_PRODUTOS_POR_RODADA:
                 break
+
+            tamanhos_atuais = extrair_tamanhos_da_pagina(page, link)
 
             # 1. Produto NOVO na loja
             if link not in historico:
-                tamanhos_atuais = extrair_tamanhos_da_pagina(page, link)
-                str_tamanhos = ", ".join(tamanhos_atuais) if tamanhos_atuais else "Não identificados/Único"
-                
-                msg = (
-                    f"🚨 Novo produto na Pantoja11!\n\n"
-                    f"📌 Item: {nome}\n"
-                    f"📏 Tamanhos: {str_tamanhos}\n"
-                    f"🔗 Link: {link}"
-                )
-                if enviar_mensagem_telegram(msg):
-                    historico[link] = {
-                        "nome": nome,
-                        "tamanhos": tamanhos_atuais
-                    }
-                    houve_alteracao = True
-                    processados_nesta_rodada += 1
-                    time.sleep(1.5)
+                if tamanhos_atuais: # Só notifica se tiver tamanho real encontrado
+                    str_tamanhos = ", ".join(tamanhos_atuais)
+                    msg = (
+                        f"🚨 **Novo produto na Pantoja11!**\n\n"
+                        f"📌 **Item:** {nome}\n"
+                        f"📏 **Tamanhos:** {str_tamanhos}\n"
+                        f"🔗 [Acessar Item]({link})"
+                    )
+                    if enviar_mensagem_telegram(msg):
+                        historico[link] = {"nome": nome, "tamanhos": tamanhos_atuais, "esgotado": False}
+                        houve_alteracao = True
+                        processados += 1
+                        time.sleep(1)
 
-            # 2. Produto já existia, mas vamos checar reposição
+            # 2. Produto EXISTENTE no histórico
             else:
-                # Checa reposição só de itens que ainda não têm todos os tamanhos mapeados
                 tamanhos_antigos = historico[link].get("tamanhos", [])
-                
-                if len(tamanhos_antigos) < len(TAMANHOS_DESEJADOS):
-                    tamanhos_atuais = extrair_tamanhos_da_pagina(page, link)
-                    tamanhos_novos = [t for t in tamanhos_atuais if t not in tamanhos_antigos]
+                estava_esgotado = historico[link].get("esgotado", False)
 
+                # ALERTA DE ESGOTAMENTO
+                if not tamanhos_atuais and not estava_esgotado and len(tamanhos_antigos) > 0:
+                    msg = (
+                        f"⚠️ **PRODUTO ESGOTADO / FORA DE ESTOQUE!**\n\n"
+                        f"📌 **Item:** {nome}\n"
+                        f"❌ *Remova este item ou ajuste a disponibilidade no seu Kyte.*"
+                    )
+                    if enviar_mensagem_telegram(msg):
+                        historico[link]["esgotado"] = True
+                        historico[link]["tamanhos"] = []
+                        houve_alteracao = True
+                        processados += 1
+                        time.sleep(1)
+
+                # ALERTA DE REPOSIÇÃO
+                else:
+                    tamanhos_novos = [t for t in tamanhos_atuais if t not in tamanhos_antigos]
                     if tamanhos_novos:
                         str_novos = ", ".join(tamanhos_novos)
-                        str_todos = ", ".join(tamanhos_atuais)
                         msg = (
-                            f"🔄 Reposição de Tamanho na Pantoja11!\n\n"
-                            f"📌 Item: {nome}\n"
-                            f"✨ Novo(s) tamanho(s) disponível(is): {str_novos}\n"
-                            f"📏 Todos disponíveis: {str_todos}\n"
-                            f"🔗 Link: {link}"
+                            f"🔄 **Reposição de Tamanho!**\n\n"
+                            f"📌 **Item:** {nome}\n"
+                            f"✨ **Entrou:** {str_novos}\n"
+                            f"🔗 [Acessar Item]({link})"
                         )
                         if enviar_mensagem_telegram(msg):
                             historico[link]["tamanhos"] = tamanhos_atuais
-                            historico[link]["nome"] = nome
+                            historico[link]["esgotado"] = False
                             houve_alteracao = True
-                            processados_nesta_rodada += 1
-                            time.sleep(1.5)
+                            processados += 1
+                            time.sleep(1)
 
         browser.close()
 
     if houve_alteracao:
         salvar_historico(historico)
         print("✅ Histórico atualizado com sucesso.")
-    else:
-        print("ℹ️ Nenhuma novidade ou reposição enviada nesta rodada.")
 
 if __name__ == "__main__":
     main()
-                
