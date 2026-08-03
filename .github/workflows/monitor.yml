@@ -2,7 +2,7 @@ name: Monitor Pantoja11
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # Executa a cada 30 minutos
+    - cron: '*/15 * * * *'  # Executa a cada 30 minutos
   workflow_dispatch:        # Permite rodar manualmente no painel
 
 jobs:
