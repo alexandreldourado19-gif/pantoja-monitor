@@ -24,24 +24,6 @@ URLS_CATEGORIAS = [
 TAMANHOS_DESEJADOS = ["P", "M", "G", "GG", "2XL", "3XL", "4XL"]
 LIMITE_PRODUTOS_POR_RODADA = 25
 
-JS_CHECAR_ESTOQUE = """
-(el) => {
-    const classes = (el.className || '').toString().toLowerCase();
-    const parentClasses = (el.parentElement ? el.parentElement.className || '' : '').toString().toLowerCase();
-    const style = window.getComputedStyle(el);
-    const parentStyle = el.parentElement ? window.getComputedStyle(el.parentElement) : null;
-    
-    const isDisabled = el.disabled || el.getAttribute('disabled') !== null;
-    const hasLineThrough = style.textDecoration.includes('line-through') || (parentStyle && parentStyle.textDecoration.includes('line-through'));
-    const isCrossed = classes.includes('crossed') || classes.includes('slash') || parentClasses.includes('crossed') || parentClasses.includes('slash');
-    const isOutOfStock = classes.includes('out-of-stock') || classes.includes('esgotado') || classes.includes('indisponivel') || classes.includes('disabled') || classes.includes('off') || classes.includes('unavailable');
-    const parentIsOutOfStock = parentClasses.includes('out-of-stock') || parentClasses.includes('esgotado') || parentClasses.includes('indisponivel') || parentClasses.includes('disabled') || parentClasses.includes('off') || parentClasses.includes('unavailable');
-    const opacity = parseFloat(style.opacity);
-    
-    return isDisabled || hasLineThrough || isCrossed || isOutOfStock || parentIsOutOfStock || opacity < 0.6;
-}
-"""
-
 def enviar_mensagem_telegram(mensagem):
     if not TELEGRAM_TOKEN or not CHAT_ID:
         print("❌ ERRO: TELEGRAM_TOKEN ou CHAT_ID ausentes nos Secrets!")
@@ -67,14 +49,39 @@ def carregar_historico():
             with open(ARQUIVO_HISTORICO, "r", encoding="utf-8") as f:
                 dados = json.load(f)
                 return dados if isinstance(dados, dict) else {}
-        except Exception:
+        except Exception as e:
+            print(f"⚠️ Erro ao carregar histórico: {e}")
             return {}
     return {}
 
 def salvar_historico(historico):
-    os.makedirs(os.path.dirname(ARQUIVO_HISTORICO), exist_ok=True)
-    with open(ARQUIVO_HISTORICO, "w", encoding="utf-8") as f:
-        json.dump(historico, f, ensure_ascii=False, indent=2)
+    try:
+        os.makedirs(os.path.dirname(ARQUIVO_HISTORICO), exist_ok=True)
+        with open(ARQUIVO_HISTORICO, "w", encoding="utf-8") as f:
+            json.dump(historico, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"❌ Erro ao salvar histórico: {e}")
+
+def verificar_esgotado_js(el):
+    """Verifica estilos CSS de riscado/desabilitado no navegador"""
+    try:
+        return el.evaluate("""(node) => {
+            const classes = (node.className || '').toString().toLowerCase();
+            const parentClasses = (node.parentElement ? node.parentElement.className || '' : '').toString().toLowerCase();
+            const style = window.getComputedStyle(node);
+            const parentStyle = node.parentElement ? window.getComputedStyle(node.parentElement) : null;
+            
+            const isDisabled = node.disabled || node.getAttribute('disabled') !== null;
+            const hasLineThrough = style.textDecoration.includes('line-through') || (parentStyle && parentStyle.textDecoration.includes('line-through'));
+            const isCrossed = classes.includes('crossed') || classes.includes('slash') || parentClasses.includes('crossed') || parentClasses.includes('slash');
+            const isOutOfStock = classes.includes('out-of-stock') || classes.includes('esgotado') || classes.includes('indisponivel') || classes.includes('disabled') || classes.includes('off') || classes.includes('unavailable');
+            const parentIsOutOfStock = parentClasses.includes('out-of-stock') || parentClasses.includes('esgotado') || parentClasses.includes('indisponivel') || parentClasses.includes('disabled') || parentClasses.includes('off') || parentClasses.includes('unavailable');
+            const opacity = parseFloat(style.opacity);
+            
+            return isDisabled || hasLineThrough || isCrossed || isOutOfStock || parentIsOutOfStock || opacity < 0.6;
+        }""")
+    except Exception:
+        return True
 
 def extrair_dados_do_produto(page, url):
     tamanhos_disponiveis = []
@@ -86,13 +93,19 @@ def extrair_dados_do_produto(page, url):
         content = page.content()
         soup = BeautifulSoup(content, "html.parser")
         
+        # Pega o título principal do H1 da página de produto
         titulo_el = soup.select_one(".product-name, .product-title, h1.page-title, h1")
         if titulo_el:
             nome_raw = titulo_el.get_text(strip=True)
-            nome_produto = nome_raw.split(" - ")[0] if " - " in nome_raw else nome_raw
-            if " - " in nome_raw and not any(t.lower() == nome_raw.split(" - ")[-1].lower() for t.lower() in TAMANHOS_DESEJADOS):
+            partes = nome_raw.split(" - ")
+            
+            # Se o título termina com o tamanho (ex: "Camisa... - gg"), remove o sufixo
+            if len(partes) > 1 and partes[-1].strip().upper() in TAMANHOS_DESEJADOS:
+                nome_produto = " - ".join(partes[:-1])
+            else:
                 nome_produto = nome_raw
         
+        # Inspeciona caixas de tamanho
         elementos = page.query_selector_all("label, button, li, option, div, span, a")
         
         for el in elementos:
@@ -101,15 +114,14 @@ def extrair_dados_do_produto(page, url):
                 
                 for tam in TAMANHOS_DESEJADOS:
                     if texto == tam or texto == f"TAMANHO {tam}" or texto == f"TAM {tam}":
-                        esgotado = el.evaluate(JS_CHECAR_ESTOQUE)
-                        
+                        esgotado = verificar_esgotado_js(el)
                         if not esgotado and tam not in tamanhos_disponiveis:
                             tamanhos_disponiveis.append(tam)
             except Exception:
                 continue
 
     except Exception as e:
-        print(f"⚠️ Erro ao checar {url}: {e}")
+        print(f"⚠️ Erro ao checar produto em {url}: {e}")
         
     return nome_produto, tamanhos_disponiveis
 
@@ -158,9 +170,9 @@ def raspar_categorias_exatas(page):
                         links_encontrados.add(link_completo)
 
         except Exception as e:
-            print(f"⚠️ Erro ao acessar a categoria {url_categoria}: {e}")
+            print(f"⚠️ Erro ao acessar categoria {url_categoria}: {e}")
 
-    print(f"🎯 Mapeamento concluído: {len(links_encontrados)} links de produtos identificados.")
+    print(f"🎯 Mapeamento concluído: {len(links_encontrados)} links identificados.")
     return list(links_encontrados)
 
 def main():
@@ -176,7 +188,7 @@ def main():
         houve_alteracao = False
         processados = 0
 
-        # 1. NOVO ITEM DETECTADO
+        # 1. NOVOS PRODUTOS
         for link in links_encontrados:
             if processados >= LIMITE_PRODUTOS_POR_RODADA:
                 break
@@ -186,10 +198,10 @@ def main():
                 
                 nomes_invalidos = ["basquete nba", "promoção", "copa do mundo 26/27", "torcedor", "jogador", "retrô", ""]
                 if nome_real.lower().strip() in nomes_invalidos or len(nome_real) < 5:
-                    print(f"⚠️ Link ignorado por não ser um produto válido: {link}")
+                    print(f"⚠️ Ignorado por não ser produto válido: {link}")
                     continue
 
-                print(f"✨ Processando produto válido: {nome_real}")
+                print(f"✨ Processando produto: {nome_real}")
 
                 if tamanhos_atuais:
                     str_tamanhos = ", ".join(tamanhos_atuais)
@@ -208,7 +220,7 @@ def main():
                     historico[link] = {"nome": nome_real, "tamanhos": [], "esgotado": True}
                     houve_alteracao = True
 
-        # 2. VERIFICAÇÃO DE ESGOTAMENTO
+        # 2. PRODUTOS ESGOTADOS
         for link, dados in list(historico.items()):
             if processados >= LIMITE_PRODUTOS_POR_RODADA:
                 break
@@ -239,3 +251,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+                      
