@@ -5,6 +5,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
+from playwright_stealth import stealth_sync
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
@@ -75,10 +76,8 @@ def extrair_dados_do_produto(page, url):
     dados_api = {}
     
     def interceptar_resposta(response):
-        # Escuta apenas as chamadas do backend da wBuy
         if "action.php" in response.url and response.status == 200:
             try:
-                # Se a resposta for JSON, armazena os dados
                 json_data = response.json()
                 if isinstance(json_data, dict):
                     dados_api.update(json_data)
@@ -90,10 +89,7 @@ def extrair_dados_do_produto(page, url):
     nome_produto = ""
 
     try:
-        # Ativa o ouvinte de rede
         page.on("response", interceptar_resposta)
-        
-        # Abre a página e espera as requisições assíncronas do backend terminarem
         page.goto(url, wait_until="networkidle", timeout=25000)
 
         # 1. Pega o nome do produto no DOM
@@ -105,8 +101,13 @@ def extrair_dados_do_produto(page, url):
                 nome_produto = el_nome.get_text(strip=True)
                 break
 
+        # Fallback via regex se o DOM falhar
+        if not nome_produto:
+            match_nome = re.search(r"var\s+nome_produto\s*=\s*'([^']+)'", page.content())
+            if match_nome:
+                nome_produto = match_nome.group(1)
+
         # 2. Processa os dados retornados pela API (action.php)
-        # Se a API retornou a grade de estoque
         grid = dados_api.get("grade", {}) or dados_api.get("variacoes", {}) or dados_api
         
         if isinstance(grid, dict):
@@ -122,85 +123,28 @@ def extrair_dados_do_produto(page, url):
                             if em_estoque and t_desejado not in tamanhos_disponiveis:
                                 tamanhos_disponiveis.append(t_desejado)
 
-        # Desativa o ouvinte para a próxima iteração
+        # 3. Fallback de variações via DOM (.variacoes .item) caso a API não tenha sido capturada
+        if not variantes:
+            itens_variacao = soup.select(".variacoes .item, .grid-variacoes .item, .variacao-item")
+            for item in itens_variacao:
+                classes = item.get("class", [])
+                variant_id = item.get("data-id") or item.get("data-variacao") or item.get("data-sku")
+                texto_tamanho = item.get_text(strip=True).upper()
+                em_estoque = "sem_estoque" not in classes and "sem-estoque" not in classes and "indisponivel" not in classes
+                
+                for tam in TAMANHOS_DESEJADOS:
+                    if texto_tamanho in [tam, f"TAMANHO {tam}", f"TAM {tam}"]:
+                        chave = variant_id if variant_id else tam
+                        variantes[chave] = {"tamanho": tam, "estoque": em_estoque}
+                        if em_estoque and tam not in tamanhos_disponiveis:
+                            tamanhos_disponiveis.append(tam)
+
         page.remove_listener("response", interceptar_resposta)
 
     except Exception as e:
         print(f"⚠️ Erro ao capturar API em {url}: {e}")
 
-    return nome_produto.strip(), variantes, tamanhos_disponiveis
-
-    try:
-        page.goto(url, wait_until="domcontentloaded", timeout=20000)
-        
-        # AGUARDA A RENDERIZAÇÃO DINÂMICA DAS VARIAÇÕES (Importante para wBuy)
-        try:
-            page.wait_for_selector(".variacoes, .product-name, h1", timeout=5000)
-        except Exception:
-            pass # Se estourar o tempo, tenta ler o que foi carregado no HTML estático
-
-        content = page.content()
-        soup = BeautifulSoup(content, "html.parser")
-
-        # 1. Extração do Nome do Produto
-        seletores_nome = [
-            "h1.nome_produto",
-            ".product-name",
-            ".product-title",
-            "h1.page-title",
-            "h1"
-        ]
-        for seletor in seletores_nome:
-            el_nome = soup.select_one(seletor)
-            if el_nome and el_nome.get_text(strip=True):
-                nome_produto = el_nome.get_text(strip=True)
-                break
-
-        # Fallback para extrair nome via JS caso o DOM falhe
-        if not nome_produto:
-            match_nome = re.search(r"var\s+nome_produto\s*=\s*'([^']+)'", content)
-            if match_nome:
-                nome_produto = match_nome.group(1)
-
-        # 2. Extração de Variações (.variacoes .item)
-        itens_variacao = soup.select(".variacoes .item, .grid-variacoes .item, .variacao-item")
-        
-        for item in itens_variacao:
-            classes = item.get("class", [])
-            variant_id = item.get("data-id") or item.get("data-variacao") or item.get("data-sku")
-            texto_tamanho = item.get_text(strip=True).upper()
-            
-            # Verifica se está indisponível
-            em_estoque = "sem_estoque" not in classes and "sem-estoque" not in classes and "indisponivel" not in classes
-            
-            for tam in TAMANHOS_DESEJADOS:
-                if texto_tamanho == tam or texto_tamanho == f"TAMANHO {tam}" or texto_tamanho == f"TAM {tam}":
-                    chave_variante = variant_id if variant_id else tam
-                    variantes[chave_variante] = {
-                        "tamanho": tam,
-                        "estoque": em_estoque
-                    }
-                    if em_estoque and tam not in tamanhos_disponiveis:
-                        tamanhos_disponiveis.append(tam)
-
-        # Fallback de variantes usando os Scripts JS injetados pela wBuy
-        if not variantes:
-            match_sku = re.search(r'productSKU\s*=\s*"([^"]+)"', content)
-            if match_sku:
-                sku_completo = match_sku.group(1)
-                partes_sku = sku_completo.split(".")
-                sku_id = partes_sku[-1] if len(partes_sku) > 1 else sku_completo
-                
-                # Assume a variante detectada no JS como ativa
-                variantes[sku_id] = {
-                    "tamanho": "DISPONIVEL",
-                    "estoque": True
-                }
-
-    except Exception as e:
-        print(f"⚠️ Erro ao extrair dados de {url}: {e}")
-
-    # Ajuste de sufixos residuais no nome
+    # Limpeza final no nome do produto
     if nome_produto:
         partes = nome_produto.split(" - ")
         if len(partes) > 1 and partes[-1].strip().upper() in TAMANHOS_DESEJADOS:
@@ -258,35 +202,24 @@ def raspar_categorias_exatas(page):
 def main():
     historico = carregar_historico()
 
-    from playwright_stealth import stealth_sync
-
-# ... dentro da função main():
-with sync_playwright() as p:
-    # Lança o navegador com argumentos que desativam as flags de automação
-    browser = p.chromium.launch(
-        headless=True,
-        args=[
-            '--disable-blink-features=AutomationControlled',
-            '--no-sandbox',
-            '--disable-setuid-sandbox'
-        ]
-    )
-    
-    context = browser.new_context(
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        viewport={'width': 1920, 'height': 1080},
-        locale="pt-BR"
-    )
-    
-    page = context.new_page()
-    
-    # APLICA A CAMUFLAGEM STEALTH
-    stealth_sync(page)
-    
-    # ... segue o restante da sua lógica
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                '--disable-blink-features=AutomationControlled',
+                '--no-sandbox',
+                '--disable-setuid-sandbox'
+            ]
+        )
+        
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            viewport={'width': 1920, 'height': 1080},
+            locale="pt-BR"
+        )
+        
         page = context.new_page()
+        stealth_sync(page)
 
         links_encontrados = raspar_categorias_exatas(page)
         
