@@ -58,8 +58,10 @@ def salvar_historico(historico):
     with open(ARQUIVO_HISTORICO, "w", encoding="utf-8") as f:
         json.dump(historico, f, ensure_ascii=False, indent=2)
 
-def extrair_tamanhos_da_pagina(page, url):
+def extrair_dados_do_produto(page, url):
+    """Acessa a página do produto e extrai o TÍTULO REAL (h1) e os tamanhos"""
     tamanhos_disponiveis = []
+    nome_produto = ""
     try:
         page.goto(url, wait_until="domcontentloaded", timeout=15000)
         page.wait_for_timeout(1000)
@@ -67,13 +69,18 @@ def extrair_tamanhos_da_pagina(page, url):
         content = page.content()
         soup = BeautifulSoup(content, "html.parser")
         
+        # 1. Extrai o nome real do produto pelo H1 da página
+        h1 = soup.find("h1")
+        if h1:
+            nome_produto = h1.get_text(strip=True)
+        
+        # 2. Extrai os tamanhos disponíveis
         elementos = soup.find_all(["button", "option", "li", "a", "label", "span", "div"])
         
         for el in elementos:
             texto = el.get_text(strip=True).upper()
             classes = " ".join(el.get("class", [])).lower()
             
-            # Se o item/tamanho tiver marcadores de indisponível, ignora
             if any(term in classes for term in ["disabled", "indisponivel", "esgotado", "out-of-stock"]) or el.get("disabled"):
                 continue
                 
@@ -85,11 +92,11 @@ def extrair_tamanhos_da_pagina(page, url):
     except Exception as e:
         print(f"⚠️ Erro ao checar {url}: {e}")
         
-    return tamanhos_disponiveis
+    return nome_produto, tamanhos_disponiveis
 
 def raspar_categorias_exatas():
     print("🌐 Mapeando categorias exatas da Pantoja11...")
-    produtos_encontrados = {}
+    links_encontrados = set()
     
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -110,8 +117,6 @@ def raspar_categorias_exatas():
                 
                 for a in soup.find_all("a", href=True):
                     href = a["href"].strip()
-                    texto = a.get_text(strip=True)
-                    
                     if not href or href.startswith("#") or "javascript:" in href.lower():
                         continue
                     
@@ -122,21 +127,19 @@ def raspar_categorias_exatas():
                         continue
 
                     if "pantoja11.com.br" in link_completo and link_completo.rstrip("/") not in [u.rstrip("/") for u in URLS_CATEGORIAS]:
-                        nome = texto if len(texto) >= 4 else "Produto Pantoja11"
-                        if link_completo not in produtos_encontrados:
-                            produtos_encontrados[link_completo] = nome
+                        links_encontrados.add(link_completo)
 
             except Exception as e:
                 print(f"⚠️ Erro ao acessar a categoria {url_categoria}: {e}")
 
         browser.close()
 
-    print(f"🎯 Mapeamento concluído: {len(produtos_encontrados)} produtos encontrados.")
-    return produtos_encontrados
+    print(f"🎯 Mapeamento concluído: {len(links_encontrados)} links de produtos encontrados.")
+    return list(links_encontrados)
 
 def main():
     historico = carregar_historico()
-    produtos_encontrados = raspar_categorias_exatas()
+    links_encontrados = raspar_categorias_exatas()
     
     houve_alteracao = False
     processados = 0
@@ -147,41 +150,42 @@ def main():
         page = context.new_page()
 
         # 1. VERIFICAÇÃO DE PRODUTOS NOVOS
-        for link, nome in produtos_encontrados.items():
+        for link in links_encontrados:
             if processados >= LIMITE_PRODUTOS_POR_RODADA:
                 break
 
             if link not in historico:
-                print(f"✨ Novo item mapeado: {nome}")
-                tamanhos_atuais = extrair_tamanhos_da_pagina(page, link)
+                print(f"✨ Novo item mapeado: {link}")
+                nome_real, tamanhos_atuais = extrair_dados_do_produto(page, link)
+                
+                # Nome padrão caso por algum motivo o H1 falhe
+                nome_final = nome_real if nome_real else "Produto Pantoja11"
 
                 if tamanhos_atuais:
                     str_tamanhos = ", ".join(tamanhos_atuais)
                     msg = (
                         f"🚨 **Novo produto na Pantoja11!**\n\n"
-                        f"📌 **Item:** {nome}\n"
+                        f"📌 **Item:** {nome_final}\n"
                         f"📏 **Tamanhos:** {str_tamanhos}\n"
                         f"🔗 [Acessar Item]({link})"
                     )
                     if enviar_mensagem_telegram(msg):
-                        historico[link] = {"nome": nome, "tamanhos": tamanhos_atuais, "esgotado": False}
+                        historico[link] = {"nome": nome_final, "tamanhos": tamanhos_atuais, "esgotado": False}
                         houve_alteracao = True
                         processados += 1
                         time.sleep(1)
                 else:
-                    historico[link] = {"nome": nome, "tamanhos": [], "esgotado": True}
+                    historico[link] = {"nome": nome_final, "tamanhos": [], "esgotado": True}
                     houve_alteracao = True
 
-        # 2. VERIFICAÇÃO DE ESGOTAMENTO EM PRODUTOS JÁ EXISTENTES NO HISTÓRICO
+        # 2. VERIFICAÇÃO DE ESGOTAMENTO EM PRODUTOS JÁ EXISTENTES
         for link, dados in list(historico.items()):
             if processados >= LIMITE_PRODUTOS_POR_RODADA:
                 break
 
-            # Se o produto estava ativo (não esgotado)
             if not dados.get("esgotado", False):
-                tamanhos_atuais = extrair_tamanhos_da_pagina(page, link)
+                _, tamanhos_atuais = extrair_dados_do_produto(page, link)
 
-                # Se zerou os tamanhos, notifica o esgotamento
                 if not tamanhos_atuais:
                     msg = (
                         f"⚠️ **PRODUTO ESGOTADO / FORA DE ESTOQUE!**\n\n"
@@ -205,4 +209,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-        
+    
