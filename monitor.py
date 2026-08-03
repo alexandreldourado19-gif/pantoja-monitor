@@ -5,7 +5,12 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
+
+# Importação compatível do playwright-stealth
+try:
+    from playwright_stealth import stealth_sync
+except ImportError:
+    from playwright_stealth.stealth import stealth_sync
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
@@ -220,7 +225,7 @@ def main():
         
         page = context.new_page()
         
-        # Aplicação da camuflagem anti-bot sem falhas de importação
+        # Aplica a camuflagem stealth na página
         stealth_sync(page)
 
         links_encontrados = raspar_categorias_exatas(page)
