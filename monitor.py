@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import re
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
@@ -69,8 +70,7 @@ def salvar_historico(historico):
 
 def extrair_dados_do_produto(page, url):
     """
-    Inspeciona a página do produto via BeautifulSoup focando na estrutura nativa da wBuy.
-    Retorna: (nome_produto, variantes_dict, tamanhos_disponiveis_list)
+    Aguarda a renderização JS dos elementos da wBuy antes de extrair dados.
     """
     variantes = {}
     tamanhos_disponiveis = []
@@ -79,9 +79,16 @@ def extrair_dados_do_produto(page, url):
     try:
         page.goto(url, wait_until="domcontentloaded", timeout=20000)
         
-        soup = BeautifulSoup(page.content(), "html.parser")
+        # AGUARDA A RENDERIZAÇÃO DINÂMICA DAS VARIAÇÕES (Importante para wBuy)
+        try:
+            page.wait_for_selector(".variacoes, .product-name, h1", timeout=5000)
+        except Exception:
+            pass # Se estourar o tempo, tenta ler o que foi carregado no HTML estático
 
-        # 3. Captura do nome do produto testando os seletores na ordem exata
+        content = page.content()
+        soup = BeautifulSoup(content, "html.parser")
+
+        # 1. Extração do Nome do Produto
         seletores_nome = [
             "h1.nome_produto",
             ".product-name",
@@ -95,22 +102,23 @@ def extrair_dados_do_produto(page, url):
                 nome_produto = el_nome.get_text(strip=True)
                 break
 
-        # 1. Localização direta das variações da wBuy (.variacoes .item)
-        itens_variacao = soup.select(".variacoes .item")
+        # Fallback para extrair nome via JS caso o DOM falhe
+        if not nome_produto:
+            match_nome = re.search(r"var\s+nome_produto\s*=\s*'([^']+)'", content)
+            if match_nome:
+                nome_produto = match_nome.group(1)
+
+        # 2. Extração de Variações (.variacoes .item)
+        itens_variacao = soup.select(".variacoes .item, .grid-variacoes .item, .variacao-item")
         
         for item in itens_variacao:
             classes = item.get("class", [])
-            
-            # Identificação do ID/SKU da variante nos atributos data-* do HTML
             variant_id = item.get("data-id") or item.get("data-variacao") or item.get("data-sku")
-            
-            # Texto do tamanho
             texto_tamanho = item.get_text(strip=True).upper()
             
-            # Ignora elementos com a classe sem_estoque
-            em_estoque = "sem_estoque" not in classes and "sem-estoque" not in classes
+            # Verifica se está indisponível
+            em_estoque = "sem_estoque" not in classes and "sem-estoque" not in classes and "indisponivel" not in classes
             
-            # Padronização e filtro de tamanhos
             for tam in TAMANHOS_DESEJADOS:
                 if texto_tamanho == tam or texto_tamanho == f"TAMANHO {tam}" or texto_tamanho == f"TAM {tam}":
                     chave_variante = variant_id if variant_id else tam
@@ -120,6 +128,20 @@ def extrair_dados_do_produto(page, url):
                     }
                     if em_estoque and tam not in tamanhos_disponiveis:
                         tamanhos_disponiveis.append(tam)
+
+        # Fallback de variantes usando os Scripts JS injetados pela wBuy
+        if not variantes:
+            match_sku = re.search(r'productSKU\s*=\s*"([^"]+)"', content)
+            if match_sku:
+                sku_completo = match_sku.group(1)
+                partes_sku = sku_completo.split(".")
+                sku_id = partes_sku[-1] if len(partes_sku) > 1 else sku_completo
+                
+                # Assume a variante detectada no JS como ativa
+                variantes[sku_id] = {
+                    "tamanho": "DISPONIVEL",
+                    "estoque": True
+                }
 
     except Exception as e:
         print(f"⚠️ Erro ao extrair dados de {url}: {e}")
@@ -184,7 +206,7 @@ def main():
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+        context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         page = context.new_page()
 
         links_encontrados = raspar_categorias_exatas(page)
@@ -200,7 +222,6 @@ def main():
             if link not in historico:
                 nome_real, variantes_atuais, tamanhos_atuais = extrair_dados_do_produto(page, link)
                 
-                # 4. Filtro de categorias refinado com any()
                 if not nome_real or len(nome_real) < 5 or any(x in nome_real.lower() for x in NOMES_INVALIDOS):
                     print(f"⚠️ Ignorado por ser categoria/inválido: {link}")
                     continue
@@ -216,7 +237,6 @@ def main():
                         f"🔗 [Acessar Item]({link})"
                     )
                     if enviar_mensagem_telegram(msg):
-                        # 6. Histórico com variantes e status de estoque
                         historico[link] = {
                             "nome": nome_real,
                             "variantes": variantes_atuais,
