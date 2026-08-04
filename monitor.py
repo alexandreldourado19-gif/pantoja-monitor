@@ -39,7 +39,8 @@ def enviar_mensagem_telegram(mensagem):
     payload = {
         "chat_id": CHAT_ID,
         "text": mensagem,
-        "parse_mode": "Markdown"
+        "parse_mode": "Markdown",
+        "disable_web_page_preview": False
     }
     try:
         r = requests.post(url, json=payload, timeout=10)
@@ -48,8 +49,6 @@ def enviar_mensagem_telegram(mensagem):
         return True
     except Exception as e:
         print(f"❌ Erro ao enviar para o Telegram: {e}")
-        if 'r' in locals():
-            print(f"   Resposta da API: {r.text}")
         return False
 
 def carregar_historico():
@@ -89,7 +88,9 @@ def extrair_dados_do_produto(page, url):
 
     try:
         page.on("response", interceptar_resposta)
-        page.goto(url, wait_until="networkidle", timeout=25000)
+        # Trocado para domcontentloaded para evitar travamentos por rotinas em background
+        page.goto(url, wait_until="domcontentloaded", timeout=20000)
+        page.wait_for_timeout(1500) # Pequena pausa para requisições assíncronas do front-end
 
         soup = BeautifulSoup(page.content(), "html.parser")
         seletores_nome = ["h1.nome_produto", ".product-name", ".product-title", "h1.page-title", "h1"]
@@ -137,7 +138,7 @@ def extrair_dados_do_produto(page, url):
         page.remove_listener("response", interceptar_resposta)
 
     except Exception as e:
-        print(f"⚠️ Erro ao capturar API em {url}: {e}")
+        print(f"⚠️ Erro ao processar produto {url}: {e}")
 
     if nome_produto:
         partes = nome_produto.split(" - ")
@@ -193,10 +194,6 @@ def raspar_categorias_exatas(page):
 def main():
     print("🚀 Iniciando monitor da Pantoja11...")
     
-    # TESTE DE CONEXÃO COM TELEGRAM
-    print("📱 Testando envio para o Telegram...")
-    enviar_mensagem_telegram("🤖 **Monitor Pantoja11 Ativo!**\nRodada iniciada com sucesso.")
-
     historico = carregar_historico()
     print(f"📊 Histórico atual contém {len(historico)} produtos cadastrados.")
 
@@ -229,7 +226,7 @@ def main():
         houve_alteracao = False
         processados = 0
 
-        # 1. NOVOS PRODUTOS / ATUALIZAÇÃO DE VARIANTES
+        # 1. NOVOS PRODUTOS
         for link in links_encontrados:
             if processados >= LIMITE_PRODUTOS_POR_RODADA:
                 print("🛑 Limite de produtos por rodada atingido.")
@@ -245,7 +242,9 @@ def main():
 
                 print(f"✨ Novo Produto: {nome_real} | Tamanhos em estoque: {tamanhos_atuais}")
 
-                if tamanhos_atuais:
+                esgotado = len(tamanhos_atuais) == 0
+
+                if not esgotado:
                     str_tamanhos = ", ".join(tamanhos_atuais)
                     msg = (
                         f"🚨 **Novo produto na Pantoja11!**\n\n"
@@ -253,46 +252,61 @@ def main():
                         f"📏 **Tamanhos Disponíveis:** {str_tamanhos}\n"
                         f"🔗 [Acessar Item]({link})"
                     )
-                    if enviar_mensagem_telegram(msg):
-                        historico[link] = {
-                            "nome": nome_real,
-                            "variantes": variantes_atuais,
-                            "tamanhos": tamanhos_atuais,
-                            "esgotado": False
-                        }
-                        houve_alteracao = True
-                        processados += 1
-                        time.sleep(1)
-                else:
-                    historico[link] = {
-                        "nome": nome_real,
-                        "variantes": variantes_atuais,
-                        "tamanhos": [],
-                        "esgotado": True
-                    }
-                    houve_alteracao = True
+                    enviar_mensagem_telegram(msg)
+                    time.sleep(1)
 
-        # 2. VERIFICAÇÃO DE ESGOTAMENTO NO HISTÓRICO
+                # Salva o produto SEMPRE no histórico para evitar re-notificações repetidas
+                historico[link] = {
+                    "nome": nome_real,
+                    "variantes": variantes_atuais,
+                    "tamanhos": tamanhos_atuais,
+                    "esgotado": esgotado
+                }
+                houve_alteracao = True
+                processados += 1
+
+        # 2. VERIFICAÇÃO DE MUDANÇAS DE ESTOQUE (ESGOTOU OU VOLTOU AO ESTOQUE)
         for link, dados in list(historico.items()):
             if processados >= LIMITE_PRODUTOS_POR_RODADA:
                 break
 
-            if not dados.get("esgotado", False):
-                _, variantes_atuais, tamanhos_atuais = extrair_dados_do_produto(page, link)
+            # Re-analisa se o produto estava com estoque ou se estava esgotado para conferir reposição
+            _, variantes_atuais, tamanhos_atuais = extrair_dados_do_produto(page, link)
 
-                if not tamanhos_atuais and dados.get("tamanhos"):
-                    msg = (
-                        f"⚠️ **PRODUTO ESGOTADO / FORA DE ESTOQUE!**\n\n"
-                        f"📌 **Item:** {dados.get('nome', 'Produto')}\n"
-                        f"❌ *Remova este item ou ajuste a disponibilidade no seu Kyte.*"
-                    )
-                    if enviar_mensagem_telegram(msg):
-                        historico[link]["esgotado"] = True
-                        historico[link]["tamanhos"] = []
-                        historico[link]["variantes"] = variantes_atuais
-                        houve_alteracao = True
-                        processados += 1
-                        time.sleep(1)
+            estava_esgotado = dados.get("esgotado", False)
+            esta_esgotado_agora = len(tamanhos_atuais) == 0
+
+            # Caso 1: O produto esgotou
+            if not estava_esgotado and esta_esgotado_agora:
+                msg = (
+                    f"⚠️ **PRODUTO ESGOTADO / FORA DE ESTOQUE!**\n\n"
+                    f"📌 **Item:** {dados.get('nome', 'Produto')}\n"
+                    f"❌ *Remova este item ou ajuste a disponibilidade no seu Kyte.*"
+                )
+                enviar_mensagem_telegram(msg)
+                historico[link]["esgotado"] = True
+                historico[link]["tamanhos"] = []
+                historico[link]["variantes"] = variantes_atuais
+                houve_alteracao = True
+                processados += 1
+                time.sleep(1)
+
+            # Caso 2: O produto teve reposição (Restock)
+            elif estava_esgotado and not esta_esgotado_agora:
+                str_tamanhos = ", ".join(tamanhos_atuais)
+                msg = (
+                    f"🔄 **REPOSIÇÃO DE ESTOQUE!**\n\n"
+                    f"📌 **Item:** {dados.get('nome', 'Produto')}\n"
+                    f"📏 **Tamanhos Disponíveis:** {str_tamanhos}\n"
+                    f"🔗 [Acessar Item]({link})"
+                )
+                enviar_mensagem_telegram(msg)
+                historico[link]["esgotado"] = False
+                historico[link]["tamanhos"] = tamanhos_atuais
+                historico[link]["variantes"] = variantes_atuais
+                houve_alteracao = True
+                processados += 1
+                time.sleep(1)
 
         browser.close()
 
