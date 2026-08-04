@@ -215,48 +215,47 @@ def eh_url_produto_valida(url_limpa):
     return True
 
 def raspar_categorias_exatas(page):
-    logging.info("🌐 Mapeando catálogo da Pantoja11 (Modo Diagnóstico)...")
+    logging.info("🌐 Mapeando chamadas XHR/API da wBuy na Pantoja11...")
+    
+    # Listener de rede para capturar todos os endpoints de dados/AJAX
+    def log_response(response):
+        url = response.url
+        status = response.status
+        # Filtra apenas chamadas relevantes descartando imagens/CSS estáticos
+        if any(palavra in url.lower() for palavra in [
+            "product", "produto", "categoria", "category", 
+            "search", "list", "action", "json", "ajax", "api", "wbuy"
+        ]):
+            logging.info(f"🌐 [XHR Capturado] {status} -> {url}")
+
+    # Registra o escutador de eventos no Playwright
+    page.on("response", log_response)
+
     links_encontrados = set()
 
     for url_categoria in URLS_CATEGORIAS:
         try:
-            logging.info(f"Navegando para: {url_categoria}")
+            logging.info(f"\n==================================================")
+            logging.info(f"🌐 INVESTIGANDO REDE NA CATEGORIA: {url_categoria}")
+            logging.info(f"==================================================")
             
-            # networkidle para aguardar todas as conexões AJAX terminarem
-            page.goto(url_categoria, wait_until="networkidle", timeout=25000)
-            
-            # Aguarda 5 segundos adicionais para renderização completa
-            page.wait_for_timeout(5000)
+            # Carrega aguardando estabilização da rede
+            page.goto(url_categoria, wait_until="networkidle", timeout=30000)
+            page.wait_for_timeout(3000)
 
-            logging.info(f"Página carregada (URL Final): {page.url}")
-
-            html = page.content()
-            logging.info(f"Tamanho do HTML retornado: {len(html)} bytes")
-
-            print("\n--- [ DUMP PRIMEIROS 2000 CARACTERES DO HTML ] ---")
-            print(html[:2000])
-            print("--- [ FIM DO DUMP ] ---\n")
-
-            soup = BeautifulSoup(html, "html.parser")
-            todos_links = soup.find_all("a")
-            logging.info(f"Foram encontrados {len(todos_links)} links <a> na página {url_categoria}")
-
-            for a in todos_links:
-                href = a.get("href", "").strip()
-                if not href or href.startswith("#") or "javascript:" in href.lower():
-                    continue
-                
-                link_completo = href if href.startswith("http") else f"{URL_BASE}/{href.lstrip('/')}"
-                link_limpo = link_completo.rstrip("/")
-
-                if "pantoja11.com.br" in link_completo and eh_url_produto_valida(link_limpo):
-                    links_encontrados.add(link_completo)
+            # Scroll para forçar chamadas de paginação/lazy-loading via AJAX
+            for _ in range(5):
+                page.evaluate("window.scrollBy(0, 1000)")
+                page.wait_for_timeout(800)
 
         except Exception as e:
-            logging.warning(f"Erro ao mapear categoria {url_categoria}: {e}")
+            logging.warning(f"Erro ao analisar requisições na categoria {url_categoria}: {e}")
 
-    logging.info(f"🎯 Mapeamento concluído: {len(links_encontrados)} links válidos de produtos encontrados.")
+    # Remove o listener ao finalizar
+    page.remove_listener("response", log_response)
+    
     return list(links_encontrados)
+
                 
 
 def main():
