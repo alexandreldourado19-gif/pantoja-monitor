@@ -215,18 +215,34 @@ def eh_url_produto_valida(url_limpa):
     return True
 
 def raspar_categorias_exatas(page):
-    logging.info("🌐 Mapeando catálogo com Playwright...")
+    logging.info("🌐 Mapeando catálogo da Pantoja11 (Modo Diagnóstico)...")
     links_encontrados = set()
 
     for url_categoria in URLS_CATEGORIAS:
         try:
-            page.goto(url_categoria, wait_until="domcontentloaded", timeout=15000)
-            page.mouse.wheel(0, 1500)
-
-            soup = BeautifulSoup(page.content(), "html.parser")
+            logging.info(f"Navegando para: {url_categoria}")
             
-            for a in soup.find_all("a", href=True):
-                href = a["href"].strip()
+            # networkidle para aguardar todas as conexões AJAX terminarem
+            page.goto(url_categoria, wait_until="networkidle", timeout=25000)
+            
+            # Aguarda 5 segundos adicionais para renderização completa
+            page.wait_for_timeout(5000)
+
+            logging.info(f"Página carregada (URL Final): {page.url}")
+
+            html = page.content()
+            logging.info(f"Tamanho do HTML retornado: {len(html)} bytes")
+
+            print("\n--- [ DUMP PRIMEIROS 2000 CARACTERES DO HTML ] ---")
+            print(html[:2000])
+            print("--- [ FIM DO DUMP ] ---\n")
+
+            soup = BeautifulSoup(html, "html.parser")
+            todos_links = soup.find_all("a")
+            logging.info(f"Foram encontrados {len(todos_links)} links <a> na página {url_categoria}")
+
+            for a in todos_links:
+                href = a.get("href", "").strip()
                 if not href or href.startswith("#") or "javascript:" in href.lower():
                     continue
                 
@@ -239,8 +255,9 @@ def raspar_categorias_exatas(page):
         except Exception as e:
             logging.warning(f"Erro ao mapear categoria {url_categoria}: {e}")
 
-    logging.info(f"🎯 Mapeamento concluído: {len(links_encontrados)} links de produtos encontrados.")
+    logging.info(f"🎯 Mapeamento concluído: {len(links_encontrados)} links válidos de produtos encontrados.")
     return list(links_encontrados)
+                
 
 def main():
     logging.info("🚀 Iniciando monitor...")
