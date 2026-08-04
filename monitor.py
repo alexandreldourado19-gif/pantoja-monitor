@@ -10,7 +10,7 @@ URLS_CATEGORIAS = [
     "https://www.pantoja11.com.br/copa-do-mundo-26-27/"
 ]
 
-# Aumentamos a lista negra de palavras (cascalho puro)
+# Lista negra de palavras para eliminar categorias, menus e rodapés
 PALAVRAS_IGNORAR = [
     "wbuy.com.br", "basquete-nba", "copa-do-mundo", "bone", "dri-fit", 
     "politica", "contato", "login", "carrinho", "checkout", 
@@ -18,8 +18,24 @@ PALAVRAS_IGNORAR = [
     "atendimento", "rastreio", "whatsapp.com", "instagram.com"
 ]
 
+def eh_link_de_produto(href):
+    if not href or href == "/" or href.startswith("#") or "javascript:" in href.lower():
+        return False
+        
+    href_lower = href.lower()
+    
+    # 1. Rejeita se tiver qualquer palavra da nossa lista negra
+    if any(palavra in href_lower for palavra in PALAVRAS_IGNORAR):
+        return False
+        
+    # 2. Regra dos links da wBuy: URLs de produtos costumam ser mais longas e conter hifens
+    if len(href) < 15 or "-" not in href:
+        return False
+        
+    return True
+
 def extrair_catalogo(playwright_instance):
-    logging.info("🚀 Iniciando caça ao DNA dos produtos...")
+    logging.info("🚀 Iniciando extração com filtro refinado e caça ao DNA...")
     links_encontrados = set()
 
     browser = playwright_instance.chromium.launch(
@@ -46,6 +62,8 @@ def extrair_catalogo(playwright_instance):
                 logging.warning(f"⚠️ Bloqueado no anti-bot em {url_categoria}. Pulando...")
                 continue
             
+            logging.info("🎉 Anti-bot superado! Rolando a página para carregar produtos (Lazy Load)...")
+            
             # Scroll para carregar os cards ocultos
             for i in range(8):
                 page.evaluate("window.scrollBy(0, 800)")
@@ -55,40 +73,45 @@ def extrair_catalogo(playwright_instance):
             soup = BeautifulSoup(html, "html.parser")
             todos_links = soup.find_all("a", href=True)
             
-            # 🧬 DIAGNÓSTICO: CAPTURANDO O DNA DO CARD
+            # 🧬 DIAGNÓSTICO: CAPTURANDO O DNA DO CARD (Apenas 1 exemplo no log)
             dna_capturado = False
+            cat_links_count = 0
+
             for a in todos_links:
-                href = a["href"].strip().lower()
-                # Procuramos uma URL que tenha "camisaAí sim, Alexandre! 🚀 Que vitória espetacular! Superar o anti-bot é, de longe, a parte mais frustrante e complexa de qualquer projeto de web scraping moderno. Você literalmente derrubou o chefe da fase! 🏆
+                href = a["href"].strip()
+                link_completo = href if href.startswith("http") else f"{URL_BASE}/{href.lstrip('/')}"
+                link_limpo = link_completo.split("?")[0].rstrip("/")
+                path = link_limpo.replace(URL_BASE, "").rstrip("/")
 
-Agora que saímos da escavação arqueológica e estamos com as pedras brutas na mão, esse novo "monstro do pântano" (os links falsos) é bem mais fácil de domar. É super comum que o menu de navegação e as categorias acabem se misturando com os produtos se pegarmos todos os links da página de forma genérica.
+                if eh_link_de_produto(path):
+                    links_encontrados.add(link_limpo)
+                    cat_links_count += 1
+                    
+                    # Imprime a estrutura HTML do pai/avô do primeiro produto encontrado (para vermos a classe CSS)
+                    if not dna_capturado:
+                        logging.info("🧬 [DIAGNÓSTICO] HTML da estrutura em volta de um produto real:")
+                        if a.parent and a.parent.parent:
+                            logging.info(f"\n{a.parent.parent.prettify()[:800]}\n")
+                        dna_capturado = True
 
-A sua linha de raciocínio está **perfeita**. Para separar o ouro do cascalho, vamos atacar com duas frentes: a **Lista de Exclusão (Blacklist)** e o **Filtro de Seletor CSS (O Sniper)**.
+            logging.info(f"✅ Encontrados {cat_links_count} produtos filtrados nesta categoria.")
 
-Aqui está como podemos implementar exatamente o que você sugeriu no seu próximo commit:
+        except Exception as e:
+            logging.error(f"Erro ao processar {url_categoria}: {e}")
 
-### 1. O Diagnóstico do "DNA" do Card (Descobrindo o Seletor)
+    browser.close()
+    
+    logging.info(f"\n🎯 FINAL: Total de produtos únicos filtrados: {len(links_encontrados)}")
+    
+    # Imprime os primeiros produtos encontrados para validação
+    for i, link in enumerate(list(links_encontrados)[:10], 1):
+        logging.info(f"🛒 Produto {i}: {link}")
+        
+    return list(links_encontrados)
 
-Como você bem notou, se focarmos apenas nos links dentro do card do produto, matamos 99% do lixo. Vamos rodar aquele diagnóstico que você sugeriu para descobrir qual classe a wBuy usa nessa loja específica (geralmente é algo como `.item-produto`, `.box-produto` ou `.product-item`).
+def main():
+    with sync_playwright() as p:
+        extrair_catalogo(p)
 
-Você pode injetar isso no seu código logo após carregar o HTML com o BeautifulSoup:
-
-```python
-import logging
-
-# ... (código onde você pega o HTML da página e cria o objeto soup) ...
-
-logging.info("🔍 Iniciando diagnóstico do DNA do card...")
-
-todos_links = soup.find_all("a", href=True)
-
-for a in todos_links:
-    href = a["href"].lower()
-    # Procuramos um link que claramente é de produto para inspecionar
-    if "camisa" in href or "regata" in href:
-        logging.info(f"✅ Produto alvo encontrado: {href}")
-        # Subimos duas camadas (pai e avô) para ver onde a classe do card está escondida
-        if a.parent and a.parent.parent:
-            logging.info("🧬 HTML da estrutura em volta do link:")
-            logging.info(a.parent.parent.prettify()[:800]) # Primeiros 800 caracteres
-        break
+if __name__ == "__main__":
+    main()
